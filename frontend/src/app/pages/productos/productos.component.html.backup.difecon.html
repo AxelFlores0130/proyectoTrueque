@@ -1,0 +1,293 @@
+﻿<div class="productos-page">
+  <!-- Tabs arriba -->
+  <section class="tabs">
+    <div class="tabs-left">
+      <button
+        type="button"
+        [class.activo]="tab === 'explorar'"
+        (click)="cambiarTab('explorar')">
+        Explorar productos
+      </button>
+
+      <button
+        type="button"
+        [class.activo]="tab === 'mis'"
+        (click)="cambiarTab('mis')">
+        Mis productos
+      </button>
+    </div>
+
+    <div class="tabs-right" *ngIf="isAuth">
+      <button
+        type="button"
+        class="btn-primary outline"
+        (click)="abrirFormularioNuevo()">
+        + Publicar producto
+      </button>
+    </div>
+  </section>
+
+  <!-- TAB: EXPLORAR PRODUCTOS -->
+  <section *ngIf="tab === 'explorar'" class="section">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input
+          type="text"
+          class="input"
+          placeholder="Buscar productos..."
+          [(ngModel)]="busqueda"
+          name="q" />
+
+        <select
+          class="select"
+          [(ngModel)]="categoriaSeleccionada"
+          name="filtro_categoria">
+          <option [ngValue]="null">Todas las categorías</option>
+          <option *ngFor="let c of categorias" [ngValue]="c.id_categoria">
+            {{ c.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <div class="toolbar-right">
+        <button class="btn-secondary" type="button" (click)="limpiarFiltros()">
+          Limpiar
+        </button>
+        <button class="btn-primary" type="button" (click)="onBuscar()">
+          Buscar
+        </button>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <h2>Productos disponibles</h2>
+      <p class="section-subtitle">
+        Explora productos publicados por otros usuarios.
+      </p>
+    </div>
+
+    <div *ngIf="productosExplorar.length === 0" class="empty">
+      No hay productos disponibles con los filtros actuales.
+    </div>
+
+    <div class="grid-cards" *ngIf="productosExplorar.length > 0">
+      <article *ngFor="let p of productosExplorar" class="card-producto">
+        <div class="card-image" *ngIf="resolverImagen(p.imagen_url) as imgUrl">
+          <img [src]="imgUrl" [alt]="p.titulo" />
+        </div>
+
+        <div class="card-body">
+          <h3>{{ p.titulo }}</h3>
+          <p class="categoria">{{ p.categoria_nombre }}</p>
+          <p class="meta">
+            ${{ p.valor_estimado }} · {{ p.ubicacion }}
+          </p>
+        </div>
+
+        <div class="card-footer">
+          <button
+            *ngIf="isAuth"
+            class="btn-primary w-full"
+            type="button"
+            (click)="abrirModalMatch(p)">
+            Me interesa / Hacer match
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- TAB: MIS PRODUCTOS -->
+  <section *ngIf="tab === 'mis'" class="section">
+    <div class="section-header">
+      <h2>Mis productos</h2>
+      <p class="section-subtitle">
+        Gestiona los productos que has publicado para intercambio.
+      </p>
+    </div>
+
+    <div *ngIf="misProductos.length === 0" class="empty">
+      Aún no has publicado productos. ¡Empieza publicando alguno!
+    </div>
+
+    <div class="grid-cards" *ngIf="misProductos.length > 0">
+      <article *ngFor="let p of misProductos" class="card-producto">
+        <div class="card-image" *ngIf="resolverImagen(p.imagen_url) as imgUrl">
+          <img [src]="imgUrl" [alt]="p.titulo" />
+        </div>
+
+        <div class="card-body">
+          <h3>{{ p.titulo }}</h3>
+          <p class="categoria">{{ p.categoria_nombre }}</p>
+          <p class="meta">
+            ${{ p.valor_estimado }} · {{ p.ubicacion }}
+          </p>
+          <p class="estado" [class.baja]="p.estado === 'baja'">
+            {{ p.estado === 'baja' ? 'Inactivo (baja)' : 'Disponible' }}
+          </p>
+        </div>
+
+        <div class="card-footer flex-row">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="abrirFormularioEditar(p)">
+            Editar
+          </button>
+
+          <button
+            type="button"
+            class="btn-warning"
+            (click)="toggleEstado(p)">
+            {{ p.estado === 'disponible' ? 'Dar de baja' : 'Dar de alta' }}
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- MODAL: Publicar / Editar producto -->
+  <div
+    class="backdrop"
+    *ngIf="isAuth && mostrarFormulario"
+    (click)="cerrarFormulario()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="form-header">
+        <h2>{{ editando ? 'Editar producto' : 'Publicar producto' }}</h2>
+        <button class="close" type="button" (click)="cerrarFormulario()">✕</button>
+      </div>
+
+      <form (ngSubmit)="guardarProducto()" class="form-grid">
+        <div class="field full">
+          <label>Título del producto *</label>
+          <input
+            type="text"
+            class="input"
+            [(ngModel)]="form.titulo"
+            name="titulo"
+            required />
+        </div>
+
+        <div class="field full">
+          <label>Descripción *</label>
+          <textarea
+            class="textarea"
+            [(ngModel)]="form.descripcion"
+            name="descripcion"
+            required></textarea>
+        </div>
+
+        <div class="field half">
+          <label>Categoría *</label>
+          <select
+            class="select"
+            [(ngModel)]="form.id_categoria"
+            name="id_categoria"
+            required>
+            <option [ngValue]="null" disabled>Selecciona categoría</option>
+            <option *ngFor="let c of categorias" [ngValue]="c.id_categoria">
+              {{ c.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <div class="field half">
+          <label>Ubicación *</label>
+          <input
+            type="text"
+            class="input"
+            [(ngModel)]="form.ubicacion"
+            name="ubicacion"
+            placeholder="Ciudad, Estado, País"
+            required />
+        </div>
+
+        <div class="field half">
+          <label>Valor estimado (MXN) *</label>
+          <input
+            type="number"
+            class="input"
+            min="1"
+            step="1"
+            [(ngModel)]="form.valor_estimado"
+            name="valor_estimado"
+            required />
+        </div>
+
+        <div class="field half">
+          <label>Foto del producto</label>
+          <input
+            type="file"
+            class="input"
+            (change)="onArchivoSeleccionado($event)" />
+        </div>
+
+        <div class="field full" *ngIf="previewUrl">
+          <label>Vista previa</label>
+          <div class="preview-box">
+            <img [src]="previewUrl" alt="Vista previa" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cerrarFormulario()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary">
+            {{ editando ? 'Guardar cambios' : 'Publicar producto' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Elegir producto para ofrecer en el match -->
+  <div
+    class="backdrop"
+    *ngIf="mostrarModalMatch"
+    (click)="cerrarModalMatch()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="form-header">
+        <h2>Elegir producto para ofrecer</h2>
+        <button class="close" type="button" (click)="cerrarModalMatch()">✕</button>
+      </div>
+
+      <p class="section-subtitle" *ngIf="productoObjetivoSeleccionado">
+        Vas a hacer match con:
+        <strong>{{ productoObjetivoSeleccionado.titulo }}</strong>
+      </p>
+
+      <div *ngIf="misProductos.length === 0" class="empty">
+        No tienes productos publicados para ofrecer aún.
+      </div>
+
+      <div class="grid-cards" *ngIf="misProductos.length > 0">
+        <article
+          *ngFor="let p of misProductos"
+          class="card-producto selectable"
+          [class.seleccionado]="productoOfreceSeleccionadoId === p.id_producto"
+          (click)="productoOfreceSeleccionadoId = p.id_producto">
+          <div class="card-image" *ngIf="resolverImagen(p.imagen_url) as imgUrl">
+            <img [src]="imgUrl" [alt]="p.titulo" />
+          </div>
+          <div class="card-body">
+            <h3>{{ p.titulo }}</h3>
+            <p class="categoria">{{ p.categoria_nombre }}</p>
+            <p class="meta">
+              ${{ p.valor_estimado }} · {{ p.ubicacion }}
+            </p>
+          </div>
+        </article>
+      </div>
+
+      <div class="form-actions mt-3">
+        <button type="button" class="btn-secondary" (click)="cerrarModalMatch()">
+          Cancelar
+        </button>
+        <button type="button" class="btn-primary" (click)="confirmarMatch()">
+          Confirmar intercambio
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Backend: Flask",
+      "type": "shell",
+      "options": {
+        "cwd": "backend"
+      },
+      "command": "${config:python.pythonPath} -m flask run --host=127.0.0.1 --port=5000",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Frontend: Angular (ng serve)",
+      "type": "shell",
+      "options": {
+        "cwd": "frontend"
+      },
+      "command": "npx @angular/cli@20 ng serve --open",
+      "problemMatcher": []
+    },
+    {
+      "label": "Start: Frontend + Backend",
+      "dependsOn": [
+        "Backend: Flask",
+        "Frontend: Angular (ng serve)"
+      ],
+      "dependsOrder": "parallel"
+    }
+  ]
+}

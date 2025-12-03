@@ -1,0 +1,47 @@
+﻿import os
+from flask import Flask, jsonify
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from utils.db import db
+
+app = Flask(__name__, static_folder="static")
+
+DB_URL = os.getenv("DB_URL", "mysql+pymysql://root:root@localhost/trueque")
+app.config["SQLALCHEMY_DATABASE_URI"] = DB_URL
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "super_secret_trueque")
+app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024
+
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+JWTManager(app)
+db.init_app(app)
+
+# Crea tablas faltantes y si no hay categorías, siembra algunas
+with app.app_context():
+    from models import Usuario, Categoria, Producto, Solicitud, MensajeSolicitud
+    db.create_all()
+    if Categoria.query.count() == 0:
+        seed = [("Electrónicos",""),("Celulares",""),("Hogar",""),("Deporte",""),("Otros","")]
+        for n,d in seed:
+            db.session.add(Categoria(nombre=n, descripcion=d))
+        db.session.commit()
+
+@app.get("/api/health")
+def health():
+    return jsonify(ok=True)
+
+# Blueprints
+from routes_auth import bp_auth            # ya lo tienes
+from routes_upload import bp_upload
+from routes_categorias import bp_cats
+from routes_productos import bp_prod
+from routes_solicitudes import bp_sol
+
+app.register_blueprint(bp_auth)
+app.register_blueprint(bp_upload)
+app.register_blueprint(bp_cats)
+app.register_blueprint(bp_prod)
+app.register_blueprint(bp_sol)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)

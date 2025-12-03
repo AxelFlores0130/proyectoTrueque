@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json.schemastore.org/angular.json",
+  "version": 1,
+  "projects": {
+    "trueque-final": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/trueque-final",
+            "index": "src/index.html",
+            "main": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "assets": [
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css"
+            ],
+            "polyfills": [
+              "src/polyfills.ts"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "outputHashing": "all"
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "buildTarget": "trueque-final:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "trueque-final:build:production"
+            }
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "analytics": "4dab1468-3354-4387-8dca-6ee3aa275001"
+  }
+}

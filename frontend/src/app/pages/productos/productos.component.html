@@ -1,0 +1,432 @@
+﻿<div class="productos-page">
+  <!-- Toolbar / filtros -->
+  <section class="toolbar">
+    <div class="toolbar-left">
+      <input
+        type="text"
+        class="input"
+        placeholder="Buscar productos..."
+        [(ngModel)]="busqueda"
+        name="q"
+      />
+
+      <select
+        class="select"
+        [(ngModel)]="categoriaSeleccionada"
+        name="filtro_categoria"
+      >
+        <option [ngValue]="null">Todas las categorías</option>
+        <option *ngFor="let c of categorias" [ngValue]="c.id_categoria">
+          {{ c.nombre }}
+        </option>
+      </select>
+    </div>
+
+    <div class="toolbar-right">
+      <button class="btn-secondary" type="button" (click)="limpiarFiltros()">
+        Limpiar
+      </button>
+
+      <button class="btn-primary" type="button" (click)="onBuscar()">
+        Buscar
+      </button>
+
+      <button
+        *ngIf="isAuth"
+        class="btn-primary outline"
+        type="button"
+        (click)="abrirFormularioNuevo()"
+      >
+        + Publicar producto
+      </button>
+    </div>
+  </section>
+
+  <!-- Explorar productos (otros usuarios) -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Explorar productos</h2>
+      <p class="section-subtitle">
+        Explora productos publicados por otros usuarios.
+      </p>
+    </div>
+
+    <div *ngIf="productosExplorar.length === 0" class="empty">
+      No hay productos disponibles para intercambiar con los filtros actuales.
+    </div>
+
+    <div class="grid-cards" *ngIf="productosExplorar.length > 0">
+      <article *ngFor="let p of productosExplorar" class="card-producto">
+        <div class="card-image" *ngIf="resolverImagen(p.imagen_url) as imgUrl">
+          <img [src]="imgUrl" [alt]="p.titulo" />
+        </div>
+
+        <div class="card-body">
+          <h3>{{ p.titulo }}</h3>
+          <p class="categoria">{{ p.categoria_nombre }}</p>
+          <p class="meta">
+            ${{ p.valor_estimado }} · {{ p.ubicacion }}
+          </p>
+        </div>
+
+        <div class="card-footer">
+          <button
+            *ngIf="isAuth"
+            class="btn-primary w-full"
+            type="button"
+            (click)="crearMatch(p)"
+          >
+            Me interesa / Hacer match
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Mis productos -->
+  <section *ngIf="isAuth" class="section">
+    <div class="section-header">
+      <h2>Mis productos publicados</h2>
+      <p class="section-subtitle">
+        Gestiona los productos que has publicado para intercambio.
+      </p>
+    </div>
+
+    <div *ngIf="misProductos.length === 0" class="empty">
+      Aún no has publicado productos.
+    </div>
+
+    <div class="grid-cards" *ngIf="misProductos.length > 0">
+      <article
+        *ngFor="let p of misProductos"
+        class="card-producto"
+        [class.inactivo]="p.estado === 'baja'">
+        <div class="card-image" *ngIf="resolverImagen(p.imagen_url) as imgUrl">
+          <img [src]="imgUrl" [alt]="p.titulo" />
+        </div>
+
+        <div class="card-body">
+          <h3>{{ p.titulo }}</h3>
+          <p class="categoria">{{ p.categoria_nombre }}</p>
+          <p class="meta">
+            ${{ p.valor_estimado }} · {{ p.ubicacion }}
+          </p>
+          <p class="estado" [class.baja]="p.estado === 'baja'">
+            {{ p.estado === 'baja' ? 'Inactivo (baja)' : 'Disponible' }}
+          </p>
+        </div>
+
+        <div class="card-footer flex-row">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="prepararEditar(p)">
+            Editar
+          </button>
+
+          <!-- Botón naranja para baja, verde para alta -->
+          <button
+            type="button"
+            [ngClass]="p.estado === 'disponible' ? 'btn-warning' : 'btn-success'"
+            (click)="toggleEstado(p)">
+            {{ p.estado === 'disponible' ? 'Dar de baja' : 'Dar de alta' }}
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Modal formulario publicar / editar -->
+  <section
+    *ngIf="isAuth && mostrarFormulario"
+    class="modal-overlay"
+    (click)="cerrarFormulario()"
+  >
+    <div class="form-card" (click)="$event.stopPropagation()">
+      <div class="form-header">
+        <h2>{{ editando ? 'Editar producto' : 'Publicar producto' }}</h2>
+        <button class="close" type="button" (click)="cerrarFormulario()">
+          ✕
+        </button>
+      </div>
+
+      <form (ngSubmit)="guardarProducto()" class="form-grid">
+        <div class="field full">
+          <label>Título del producto *</label>
+          <input
+            type="text"
+            class="input"
+            [(ngModel)]="form.titulo"
+            name="titulo"
+            required
+          />
+        </div>
+
+        <div class="field full">
+          <label>Descripción *</label>
+          <textarea
+            class="textarea"
+            [(ngModel)]="form.descripcion"
+            name="descripcion"
+            required
+          ></textarea>
+        </div>
+
+        <div class="field half">
+          <label>Categoría *</label>
+          <select
+            class="select"
+            [(ngModel)]="form.id_categoria"
+            name="id_categoria"
+            required
+          >
+            <option [ngValue]="null" disabled>Selecciona categoría</option>
+            <option *ngFor="let c of categorias" [ngValue]="c.id_categoria">
+              {{ c.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <div class="field half">
+          <label>Ubicación *</label>
+          <input
+            type="text"
+            class="input"
+            [(ngModel)]="form.ubicacion"
+            name="ubicacion"
+            placeholder="Ciudad, Estado, País"
+            required
+          />
+        </div>
+
+        <div class="field half">
+          <label>Valor estimado (MXN) *</label>
+          <input
+            type="number"
+            class="input"
+            min="1"
+            step="1"
+            [(ngModel)]="form.valor_estimado"
+            name="valor_estimado"
+            required
+          />
+        </div>
+
+        <div class="field half">
+          <label>Foto del producto</label>
+          <input
+            type="file"
+            class="input"
+            (change)="onArchivoSeleccionado($event)"
+          />
+        </div>
+
+        <div class="field full" *ngIf="previewUrl">
+          <label>Vista previa</label>
+          <div class="preview-box">
+            <img [src]="previewUrl" alt="Vista previa" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="cerrarFormulario()"
+          >
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary">
+            {{ editando ? 'Guardar cambios' : 'Publicar producto' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- MODAL SOLICITUD / MATCH -->
+  <section
+    *ngIf="isAuth && mostrarModalSolicitud"
+    class="modal-overlay"
+    (click)="cerrarModalSolicitud()"
+  >
+    <div class="form-card" (click)="$event.stopPropagation()">
+      <div class="form-header">
+        <h2>Proponer intercambio</h2>
+        <button class="close" type="button" (click)="cerrarModalSolicitud()">
+          ✕
+        </button>
+      </div>
+
+      <div class="form-grid">
+        <div class="field full" *ngIf="productoObjetivo">
+          <label>Producto que quieres</label>
+          <div class="preview-box">
+            <img
+              [src]="resolverImagen(productoObjetivo.imagen_url)"
+              [alt]="productoObjetivo.titulo"
+            />
+          </div>
+          <p><strong>{{ productoObjetivo.titulo }}</strong></p>
+          <p class="meta">
+            ${{ productoObjetivo.valor_estimado }} · {{ productoObjetivo.ubicacion }}
+          </p>
+        </div>
+
+        <div class="field full">
+  <label>Tu producto que ofreces</label>
+
+  <!-- Buscador sobre tus productos -->
+  <input
+    type="text"
+    class="input"
+    placeholder="Buscar entre mis productos..."
+    [(ngModel)]="busquedaMisProductos"
+    name="buscarMisProductos"
+    *ngIf="misProductos.length > 0"
+    style="margin-bottom: 0.5rem;"
+  />
+
+  <p *ngIf="misProductos.length === 0" class="estado">
+    No tienes productos propios para ofrecer. Puedes ofrecer solo diferencia económica.
+  </p>
+
+  <!-- Lista de productos propios con imagen -->
+  <div
+    *ngIf="misProductosFiltrados.length > 0"
+    style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.5rem;"
+  >
+    <div
+      *ngFor="let mp of misProductosFiltrados"
+      class="mini-card-producto"
+      [class.seleccionado]="productoOfreceId === mp.id_producto"
+      (click)="seleccionarProductoOfrece(mp)"
+    >
+      <div class="mini-card-image">
+        <img [src]="resolverImagen(mp.imagen_url)" [alt]="mp.titulo" />
+      </div>
+      <div class="mini-card-body">
+        <div class="mini-card-title">{{ mp.titulo }}</div>
+        <div class="mini-card-meta">${{ mp.valor_estimado }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista previa del producto que ofreces -->
+  <div class="preview-box" *ngIf="productoOfreceSeleccionado">
+    <img
+      [src]="resolverImagen(productoOfreceSeleccionado.imagen_url)"
+      [alt]="productoOfreceSeleccionado.titulo"
+    />
+  </div>
+  <p *ngIf="productoOfreceSeleccionado">
+    <strong>{{ productoOfreceSeleccionado.titulo }}</strong>
+  </p>
+</div>
+
+
+        <div class="field half">
+          <label>Diferencia económica (opcional)</label>
+          <input
+            type="number"
+            class="input"
+            min="0"
+            step="1"
+            [(ngModel)]="diferenciaPropuesta"
+            name="diferenciaPropuesta"
+          />
+        </div>
+
+        <div class="field full">
+          <label>Mensaje (opcional)</label>
+          <textarea
+            class="textarea"
+            [(ngModel)]="mensajeSolicitud"
+            name="mensajeSolicitud"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="cerrarModalSolicitud()"
+            [disabled]="guardandoSolicitud"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="enviarSolicitud()"
+            [disabled]="guardandoSolicitud"
+          >
+            Enviar solicitud
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL CONFIRMAR BAJA -->
+  <section
+    *ngIf="isAuth && mostrarConfirmarBaja && productoAConfirmarBaja"
+    class="modal-overlay"
+    (click)="cancelarBaja()"
+  >
+    <div class="form-card" (click)="$event.stopPropagation()">
+      <div class="form-header">
+        <h2>Confirmar baja del producto</h2>
+        <button class="close" type="button" (click)="cancelarBaja()">
+          ✕
+        </button>
+      </div>
+
+      <div class="form-grid">
+        <div class="field full">
+          <p style="font-size:0.95rem; color:#475569; margin-bottom:0.75rem;">
+            ¿Estás seguro de que deseas dar de baja este producto?
+            Dejará de aparecer para otros usuarios, pero podrás volver a darlo de alta cuando quieras.
+          </p>
+
+          <div class="preview-box">
+            <img
+              [src]="resolverImagen(productoAConfirmarBaja.imagen_url)"
+              [alt]="productoAConfirmarBaja.titulo"
+            />
+          </div>
+          <p>
+            <strong>{{ productoAConfirmarBaja.titulo }}</strong>
+          </p>
+          <p class="meta">
+            ${{ productoAConfirmarBaja.valor_estimado }} · {{ productoAConfirmarBaja.ubicacion }}
+          </p>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="cancelarBaja()"
+            [disabled]="guardandoBaja"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn-warning"
+            (click)="confirmarBaja()"
+            [disabled]="guardandoBaja"
+          >
+            Sí, dar de baja
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+
+

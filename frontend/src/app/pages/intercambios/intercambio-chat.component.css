@@ -1,0 +1,228 @@
+.chat-container {
+  max-width: 1100px;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Header */
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.titulo-chat {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.estado-chat {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Botones de header */
+.header-right {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Aviso */
+.notice {
+  background: #f1f5f9;
+  border-left: 4px solid #0d6efd;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.notice .tag {
+  background: #fff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  border: 1px solid #0d6efd;
+  font-weight: 600;
+}
+
+/* Resumen de productos */
+.resumen-productos {
+  display: flex;
+  gap: 20px;
+  font-size: 0.9rem;
+}
+
+.resumen-col {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.resumen-col h4 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+/* Chat messages */
+.chat-mensajes {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 12px 14px;
+  height: 360px;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.mensaje {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bubble {
+  max-width: 70%;
+  padding: 8px 12px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+}
+
+.mensaje-mio .bubble {
+  margin-left: auto;
+  background: #dcf8c6;
+}
+
+.mensaje-otro .bubble {
+  margin-right: auto;
+  background: #f1f0f0;
+}
+
+.bubble.ubicacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hora {
+  font-size: 0.7rem;
+  color: #777;
+  margin-top: 2px;
+  align-self: flex-end;
+}
+
+/* Input */
+.chat-input {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.chat-input input {
+  flex: 1;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+/* Botones reutilizables */
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+}
+
+.btn-back {
+  background: #ffffff;
+  border: 1px solid #ccc;
+}
+
+.btn-back:hover {
+  background: #f5f5f5;
+}
+
+.btn-cancelar {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.btn-cancelar:hover {
+  background: #f5c6cb;
+  transform: translateY(-1px);
+}
+
+.btn-confirmar {
+  background: #28a745;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+}
+
+.btn-confirmar:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.btn-chat {
+  background: #0d6efd;
+  color: #ffffff;
+}
+
+.btn-chat:hover {
+  background: #0b5ed7;
+}
+
+.btn-ubicacion {
+  background: #6c757d;
+  color: #ffffff;
+}
+
+.btn-ubicacion:hover {
+  background: #5a6268;
+}
+
+.btn-mapa {
+  background: #0d6efd;
+  color: #ffffff;
+  font-size: 0.8rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .chat-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-left {
+    justify-content: space-between;
+  }
+
+  .resumen-productos {
+    flex-direction: column;
+  }
+
+  .chat-mensajes {
+    height: 320px;
+  }
+}
+

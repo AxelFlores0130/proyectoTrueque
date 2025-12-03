@@ -1,0 +1,160 @@
+﻿<!-- CATEGORÍAS -->
+<section class="categorias flex gap-2 overflow-x-auto mb-4">
+  <button
+    *ngFor="let c of categorias"
+    type="button"
+    (click)="seleccionarCategoria(c)"
+    [class.activa]="categoriaSeleccionada === c.id_categoria">
+    {{ c.nombre }}
+  </button>
+</section>
+
+<!-- BUSCADOR -->
+<section class="buscador flex gap-2 mb-6">
+  <input
+    [(ngModel)]="busqueda"
+    placeholder="Buscar productos..."
+    name="q"
+    class="flex-1" />
+  <button type="button" (click)="onBuscar()">Buscar</button>
+</section>
+
+<!-- EXPLORAR PRODUCTOS (OTROS USUARIOS) -->
+<section class="mt-4">
+  <h2>Explorar productos</h2>
+  <p *ngIf="productosExplorar.length === 0">
+    No hay productos disponibles para intercambiar con los filtros actuales.
+  </p>
+
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-3">
+    <article *ngFor="let p of productosExplorar" class="card-producto">
+      <img
+        *ngIf="p.imagen_url"
+        [src]="p.imagen_url"
+        alt="{{ p.titulo }}"
+        class="w-full h-40 object-cover mb-2" />
+
+      <!-- PERFIL DEL PUBLICADOR -->
+      <app-perfil-publico [id_usuario]="p.id_usuario"></app-perfil-publico>
+
+      <h3>{{ p.titulo }}</h3>
+      <p class="categoria">{{ p.categoria_nombre }}</p>
+      <p class="meta">
+        ${{ p.valor_estimado }} · {{ p.ubicacion }}
+      </p>
+
+      <button
+        *ngIf="isAuth"
+        type="button"
+        (click)="abrirModalMatch(p)"
+        class="mt-2">
+        Me interesa / Hacer match
+      </button>
+    </article>
+  </div>
+</section>
+
+<!-- MIS PRODUCTOS -->
+<section *ngIf="isAuth" class="mt-10">
+  <h2>Mis productos publicados</h2>
+  <p *ngIf="misProductos.length === 0">
+    Aún no has publicado productos.
+  </p>
+
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-3">
+    <article *ngFor="let p of misProductos" class="card-producto">
+      <img
+        *ngIf="p.imagen_url"
+        [src]="p.imagen_url"
+        alt="{{ p.titulo }}"
+        class="w-full h-40 object-cover mb-2" />
+
+      <h3>{{ p.titulo }}</h3>
+      <p class="categoria">{{ p.categoria_nombre }}</p>
+      <p class="meta">
+        ${{ p.valor_estimado }} · {{ p.ubicacion }}
+      </p>
+      <p class="estado" [class.baja]="p.estado === 'baja'">
+        {{ p.estado === 'baja' ? 'Inactivo' : 'Disponible' }}
+      </p>
+
+      <div class="acciones flex gap-2 mt-2 flex-wrap">
+        <button type="button" (click)="prepararEditar(p)">Editar</button>
+        <button type="button" (click)="toggleEstado(p)">
+          {{ p.estado === 'disponible' ? 'Dar de baja' : 'Dar de alta' }}
+        </button>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- FORMULARIO PUBLICAR / EDITAR -->
+<section *ngIf="isAuth" class="mt-10 formulario-producto">
+  <h2>{{ editando ? 'Editar producto' : 'Publicar producto' }}</h2>
+
+  <form (ngSubmit)="guardarProducto()">
+    <div class="grid gap-3">
+      <select
+        [(ngModel)]="form.id_categoria"
+        name="id_categoria"
+        required>
+        <option [ngValue]="null" disabled>Selecciona categoría</option>
+        <option
+          *ngFor="let c of categorias"
+          [ngValue]="c.id_categoria">
+          {{ c.nombre }}
+        </option>
+      </select>
+
+      <input
+        [(ngModel)]="form.titulo"
+        name="titulo"
+        required
+        placeholder="Título del producto" />
+
+      <textarea
+        [(ngModel)]="form.descripcion"
+        name="descripcion"
+        required
+        placeholder="Descripción"></textarea>
+
+      <input
+        type="number"
+        [(ngModel)]="form.valor_estimado"
+        name="valor_estimado"
+        required
+        min="0" />
+
+      <input
+        [(ngModel)]="form.ubicacion"
+        name="ubicacion"
+        required
+        placeholder="Ciudad, Estado, País" />
+
+      <input
+        type="file"
+        (change)="onArchivoSeleccionado($event)" />
+
+      <!-- VISTA PREVIA DE LA IMAGEN -->
+      <div *ngIf="previewUrl" class="mt-2">
+        <p>Vista previa:</p>
+        <img
+          [src]="previewUrl"
+          alt="Vista previa"
+          class="w-48 h-48 object-cover rounded" />
+      </div>
+
+      <button type="submit">
+        {{ editando ? 'Guardar cambios' : 'Publicar producto' }}
+      </button>
+
+      <button
+        *ngIf="editando"
+        type="button"
+        (click)="prepararNuevo()">
+        Cancelar edición
+      </button>
+    </div>
+  </form>
+</section>
+

@@ -1,0 +1,367 @@
+.solicitudes-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.solicitudes-header {
+  margin-bottom: 1rem;
+}
+
+.solicitudes-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.solicitudes-header p {
+  margin: 0.25rem 0 0.75rem;
+  color: #666;
+}
+
+.solicitudes-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.solicitudes-tabs button {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.solicitudes-tabs button.active {
+  background: #2f80ed;
+  color: #fff;
+  border-color: #2f80ed;
+}
+
+.solicitudes-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .solicitudes-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.solicitudes-column {
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.solicitudes-column h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+}
+
+.solicitudes-column h3 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 1rem;
+}
+
+.solicitud-card {
+  border-radius: 0.75rem;
+  border: 1px solid #eee;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #fafafa;
+}
+
+.solicitud-card.rechazado {
+  border-color: #f9c7c7;
+  background: #fff5f5;
+}
+
+.solicitud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #2f80ed;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.user-name {
+  font-weight: 600;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  margin-top: 0.15rem;
+}
+
+.chip-solicitante {
+  background: #e0f2ff;
+  color: #2f80ed;
+}
+
+.chip-receptor {
+  background: #e9fbe7;
+  color: #2d9d44;
+}
+
+.chip-rechazada {
+  background: #ffe3e3;
+  color: #d63031;
+}
+
+.badge {
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+.badge-pendiente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-aceptado {
+  background: #d4edda;
+  color: #155724;
+}
+
+.badge-rechazado {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.badge-cancelado {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.solicitud-body {
+  margin-top: 0.5rem;
+}
+
+.productos-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .productos-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.producto-mini {
+  text-align: center;
+}
+
+.producto-mini img {
+  width: 100%;
+  max-width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.producto-label {
+  font-size: 0.75rem;
+  color: #777;
+  margin-bottom: 0.1rem;
+}
+
+.producto-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.producto-valor {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.arrow {
+  text-align: center;
+  font-size: 1.4rem;
+  color: #aaa;
+}
+
+.diferencia {
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.mensaje {
+  margin-top: 0.4rem;
+  font-style: italic;
+  color: #555;
+}
+
+.mensaje-info {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: #b33939;
+}
+
+.solicitud-actions {
+  margin-top: 0.6rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .solicitud-actions {
+    flex-direction: column;
+  }
+}
+
+.btn-primary,
+.btn-secondary {
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  border: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #2f80ed;
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.empty-text {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+}
+
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-only {
+    display: flex;
+  }
+
+  .hidden-mobile {
+    display: none;
+  }
+}
+
+.perfil {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.perfil-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.perfil-nombre {
+  font-weight: 600;
+}
+
+.perfil-label {
+  font-size: 12px;
+  color: #888;
+}
+
+/* Cajita reoferta */
+.reoferta-box {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #f6f8ff;
+}
+
+.reoferta-box input {
+  margin-left: 6px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  max-width: 120px;
+}
+
+/* --- NUEVOS ESTILOS PARA LOS TABS CON NUMERITO --- */
+
+.tabs-solicitudes {
+  display: flex;
+  gap: 8px;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  background: #e9f1ff;
+}
+
+.tab-btn.active {
+  background: #2f80ed;   /* o el color que uses en la app */
+  color: #fff;
+  border-color: #2f80ed;
+}
+
+.badge-num {
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #ff4d4f;   /* rojo notificación */
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+

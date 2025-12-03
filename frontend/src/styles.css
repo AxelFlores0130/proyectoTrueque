@@ -1,0 +1,9 @@
+﻿:root{
+  --teal:#10b3a5;
+  --dark:#0f172a;
+  --border:#e5e7eb;
+  --muted:#64748b;
+}
+html,body{background:#f8fbff;color:var(--dark)}
+*{box-sizing:border-box}
+a{color:inherit}

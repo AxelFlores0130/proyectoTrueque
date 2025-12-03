@@ -1,0 +1,75 @@
+<div *ngIf="cargando" class="loading">
+  Cargando intercambios...
+</div>
+
+<div *ngIf="!cargando && intercambios.length === 0" class="empty">
+  No tienes intercambios en proceso.
+</div>
+
+<div class="intercambios-lista" *ngIf="!cargando && intercambios.length > 0">
+  <div class="card" *ngFor="let i of intercambios">
+    <div class="card-main">
+      <!-- Columna producto que ofreces -->
+      <div class="col-producto">
+        <h4 class="titulo-col">Tú ofreces:</h4>
+
+        <img
+          *ngIf="i.producto_ofrece?.imagen"
+          class="producto-img"
+          [src]="i.producto_ofrece?.imagen"
+          alt="Producto que ofreces"
+        />
+
+        <p class="producto-nombre">
+          {{ i.producto_ofrece?.titulo || "Solo diferencia en dinero" }}
+        </p>
+      </div>
+
+      <!-- Columna producto objetivo -->
+      <div class="col-producto">
+        <h4 class="titulo-col">Tú quieres:</h4>
+
+        <img
+          *ngIf="i.producto_objetivo?.imagen"
+          class="producto-img"
+          [src]="i.producto_objetivo?.imagen"
+          alt="Producto objetivo"
+        />
+
+        <p class="producto-nombre">
+          {{ i.producto_objetivo?.titulo }}
+        </p>
+      </div>
+
+      <!-- Columna info / acciones -->
+      <div class="col-info">
+        <div class="usuario-header">
+          <div class="usuario-nombre">
+            {{ i.otro?.nombre }}
+          </div>
+          <div class="estado-tag">
+            Estado: {{ i.estado }}
+          </div>
+        </div>
+
+        <div
+          class="diferencia"
+          *ngIf="i.diferencia_monetaria && i.diferencia_monetaria !== '0.00'"
+        >
+          Diferencia propuesta: <strong>${{ i.diferencia_monetaria }}</strong>
+        </div>
+
+        <div class="acciones">
+          <button class="btn btn-chat" (click)="verChat(i)">
+            Chatear para acordar el intercambio
+          </button>
+
+          <button class="btn btn-cancelar" (click)="cancelar(i)">
+            Cancelar este intercambio
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

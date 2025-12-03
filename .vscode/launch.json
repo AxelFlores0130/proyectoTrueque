@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flask API",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/app.py",
+      "console": "integratedTerminal",
+      "env": {
+        "FLASK_ENV": "development",
+        "FLASK_APP": "app.py"
+      },
+      "justMyCode": true
+    },
+    {
+      "name": "Angular (Chrome)",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/frontend"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Start Trueque (Angular + Flask)",
+      "configurations": [
+        "Flask API",
+        "Angular (Chrome)"
+      ]
+    }
+  ]
+}

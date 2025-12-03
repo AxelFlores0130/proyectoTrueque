@@ -1,0 +1,155 @@
+﻿<section class="tabs flex gap-4 border-b">
+  <button [class.activo]="tab === 'recibidas'" (click)="cambiarTab('recibidas')">
+    Solicitudes recibidas
+  </button>
+  <button [class.activo]="tab === 'enviadas'" (click)="cambiarTab('enviadas')">
+    Solicitudes enviadas
+  </button>
+</section>
+
+<!-- RECIBIDAS -->
+<section *ngIf="tab === 'recibidas'" class="mt-4 grid gap-3">
+  <article *ngFor="let s of recibidasList" class="card-solicitud">
+    <header class="card-header">
+      <span class="badge" [class.badge-pendiente]="s.estado === 'pendiente'">
+        {{ s.estado | titlecase }}
+      </span>
+      <span class="fecha">{{ s.creado | date:'yyyy-MM-dd HH:mm' }}</span>
+    </header>
+
+    <div class="card-body-grid">
+      <!-- Producto que te ofrecen -->
+      <div class="producto-col">
+        <h3>Te ofrecen</h3>
+        <div class="producto">
+          <img
+            *ngIf="resolverImagen(s.producto_ofrece?.imagen_url) as imgOf"
+            [src]="imgOf"
+            [alt]="s.producto_ofrece?.titulo" />
+          <div>
+            <strong>{{ s.producto_ofrece?.titulo || 'Sin producto asociado' }}</strong>
+            <p class="categoria">
+              {{ s.producto_ofrece?.categoria_nombre }}
+            </p>
+            <p class="meta">
+              ${{ s.producto_ofrece?.valor_estimado }} · {{ s.producto_ofrece?.ubicacion }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tu producto -->
+      <div class="producto-col">
+        <h3>Por tu producto</h3>
+        <div class="producto">
+          <img
+            *ngIf="resolverImagen(s.producto_objetivo.imagen_url) as imgObj"
+            [src]="imgObj"
+            [alt]="s.producto_objetivo.titulo" />
+          <div>
+            <strong>{{ s.producto_objetivo.titulo }}</strong>
+            <p class="categoria">
+              {{ s.producto_objetivo.categoria_nombre }}
+            </p>
+            <p class="meta">
+              ${{ s.producto_objetivo.valor_estimado }} · {{ s.producto_objetivo.ubicacion }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="mensaje">
+      {{ s.mensaje }}
+    </p>
+
+    <p class="diferencia">
+      Diferencia económica propuesta:
+      <strong *ngIf="s.diferencia_propuesta != null && s.diferencia_propuesta !== undefined">
+        ${{ s.diferencia_propuesta }}
+      </strong>
+      <span *ngIf="s.diferencia_propuesta == null || s.diferencia_propuesta === undefined">
+        Sin diferencia
+      </span>
+    </p>
+
+    <footer class="acciones flex gap-2 mt-2">
+      <button (click)="aceptar(s)" [disabled]="s.estado !== 'pendiente'">Aceptar</button>
+      <button (click)="rechazar(s)" [disabled]="s.estado !== 'pendiente'">Rechazar</button>
+    </footer>
+  </article>
+</section>
+
+<!-- ENVIADAS -->
+<section *ngIf="tab === 'enviadas'" class="mt-4 grid gap-3">
+  <article *ngFor="let s of enviadasList" class="card-solicitud">
+    <header class="card-header">
+      <span class="badge" [class.badge-pendiente]="s.estado === 'pendiente'">
+        {{ s.estado | titlecase }}
+      </span>
+      <span class="fecha">{{ s.creado | date:'yyyy-MM-dd HH:mm' }}</span>
+    </header>
+
+    <div class="card-body-grid">
+      <!-- Tu producto (el que ofreces) -->
+      <div class="producto-col">
+        <h3>Ofreces</h3>
+        <div class="producto">
+          <img
+            *ngIf="resolverImagen(s.producto_ofrece?.imagen_url) as imgOf"
+            [src]="imgOf"
+            [alt]="s.producto_ofrece?.titulo" />
+          <div>
+            <strong>{{ s.producto_ofrece?.titulo || 'Sin producto asociado' }}</strong>
+            <p class="categoria">
+              {{ s.producto_ofrece?.categoria_nombre }}
+            </p>
+            <p class="meta">
+              ${{ s.producto_ofrece?.valor_estimado }} · {{ s.producto_ofrece?.ubicacion }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Producto que quieres recibir -->
+      <div class="producto-col">
+        <h3>Por el producto</h3>
+        <div class="producto">
+          <img
+            *ngIf="resolverImagen(s.producto_objetivo.imagen_url) as imgObj"
+            [src]="imgObj"
+            [alt]="s.producto_objetivo.titulo" />
+          <div>
+            <strong>{{ s.producto_objetivo.titulo }}</strong>
+            <p class="categoria">
+              {{ s.producto_objetivo.categoria_nombre }}
+            </p>
+            <p class="meta">
+              ${{ s.producto_objetivo.valor_estimado }} · {{ s.producto_objetivo.ubicacion }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="mensaje">
+      {{ s.mensaje }}
+    </p>
+
+    <p class="diferencia">
+      Diferencia económica propuesta:
+      <strong *ngIf="s.diferencia_propuesta != null && s.diferencia_propuesta !== undefined">
+        ${{ s.diferencia_propuesta }}
+      </strong>
+      <span *ngIf="s.diferencia_propuesta == null || s.diferencia_propuesta === undefined">
+        Sin diferencia
+      </span>
+    </p>
+
+    <footer class="acciones flex gap-2 mt-2">
+      <button (click)="cancelar(s)" [disabled]="s.estado !== 'pendiente'">
+        Cancelar
+      </button>
+    </footer>
+  </article>
+</section>

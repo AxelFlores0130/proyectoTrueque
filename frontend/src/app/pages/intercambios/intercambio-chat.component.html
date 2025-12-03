@@ -1,0 +1,98 @@
+<div class="chat-container" *ngIf="intercambio">
+  <!-- Encabezado con info y acciones -->
+  <div class="chat-header">
+    <div class="header-left">
+      <button class="btn btn-back" (click)="volver()">
+        ← Volver a intercambios
+      </button>
+
+      <div class="user-block">
+        <div class="titulo-chat">
+          Chat con
+          {{
+            intercambio?.yo_soy_ofertante
+              ? intercambio?.usuario_recibe?.nombre
+              : intercambio?.usuario_ofrece?.nombre
+          }}
+        </div>
+        <div class="estado-chat">
+          Estado actual: {{ intercambio?.estado }}
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button class="btn btn-cancelar" (click)="cancelar()">
+        Cancelar este intercambio
+      </button>
+      <button class="btn btn-confirmar" (click)="finalizar()">
+        Confirmar que ya recibí el producto
+      </button>
+    </div>
+  </div>
+
+  <!-- Aviso de funcionamiento -->
+  <div class="notice">
+    <strong>Importante:</strong>
+    Usa este chat únicamente para coordinar lugar, fecha y hora del
+    intercambio. Pulsa
+    <span class="tag">"Confirmar que ya recibí el producto"</span> solo
+    cuando ya tengas el producto del otro usuario.
+    <br />
+    El sistema marcará el intercambio como <strong>finalizado</strong> cuando
+    <strong>ambas partes</strong> hayan confirmado. Trueque no se hace
+    responsable si alguno de los usuarios no cumple con el acuerdo o no
+    confirma el intercambio.
+  </div>
+
+  <!-- (Opcional) pequeño resumen de productos -->
+  <div class="resumen-productos">
+    <div class="resumen-col">
+      <h4>Tú ofreces</h4>
+      <p>{{ intercambio?.producto_ofrece?.titulo || "Solo diferencia en dinero" }}</p>
+    </div>
+    <div class="resumen-col">
+      <h4>Tú recibes</h4>
+      <p>{{ intercambio?.producto_objetivo?.titulo }}</p>
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  <div id="chat-scroll" class="chat-mensajes">
+    <div
+      *ngFor="let m of mensajes"
+      [ngClass]="{ 'mensaje-mio': esMio(m), 'mensaje-otro': !esMio(m) }"
+      class="mensaje"
+    >
+      <div class="bubble" *ngIf="m.tipo === 'texto'">
+        {{ m.contenido }}
+      </div>
+
+      <div class="bubble ubicacion" *ngIf="m.tipo === 'ubicacion'">
+        <span>📍 Ubicación enviada</span>
+        <button class="btn btn-mapa" (click)="abrirMapa(m)">
+          Ver en mapa
+        </button>
+      </div>
+
+      <div class="hora">
+        {{ m.creado | date: "shortTime" }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Input de chat -->
+  <div class="chat-input">
+    <input
+      type="text"
+      [(ngModel)]="nuevoMensaje"
+      placeholder="Escribe un mensaje..."
+      (keyup.enter)="enviarTexto()"
+    />
+    <button class="btn btn-chat" (click)="enviarTexto()">Enviar</button>
+    <button class="btn btn-ubicacion" (click)="enviarUbicacion()">
+      Enviar ubicación
+    </button>
+  </div>
+</div>
+

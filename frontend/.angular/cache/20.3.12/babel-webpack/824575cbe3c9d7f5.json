@@ -1,0 +1,1 @@
+{"ast":null,"code":"export const environment = {\n  production: false,\n  apiUrl: \"http://localhost:5000/api\",\n  heroUrl: \"assets/hero/portada.jpg\"\n};","map":null,"metadata":{},"sourceType":"module","externalDependencies":[]}

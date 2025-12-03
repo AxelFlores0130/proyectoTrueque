@@ -1,0 +1,92 @@
+﻿/* Estilos básicos para tarjetas de solicitudes */
+.card-solicitud {
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 10px 25px rgba(15,23,42,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .85rem;
+  color: #64748b;
+}
+
+.badge {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.badge-pendiente {
+  background-color: #f97316;
+  color: #fff;
+}
+
+.card-body-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 1rem;
+}
+
+.producto-col h3 {
+  font-size: .9rem;
+  font-weight: 600;
+  margin-bottom: .35rem;
+  color: #0f172a;
+}
+
+.producto {
+  display: flex;
+  gap: .7rem;
+}
+
+.producto img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: .6rem;
+}
+
+.categoria {
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #94a3b8;
+}
+
+.meta {
+  font-size: .85rem;
+  color: #475569;
+}
+
+.mensaje {
+  font-size: .9rem;
+  color: #475569;
+}
+
+.diferencia {
+  font-size: .9rem;
+  color: #0f172a;
+}
+
+.acciones button {
+  border-radius: 999px;
+  padding: .5rem 1.2rem;
+  border: none;
+  cursor: pointer;
+  font-size: .85rem;
+}
+
+@media (max-width: 768px) {
+  .card-body-grid {
+    grid-template-columns: 1fr;
+  }
+}
