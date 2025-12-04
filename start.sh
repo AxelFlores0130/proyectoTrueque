@@ -3,7 +3,14 @@ set -e
 
 echo "== Iniciando contenedor Railway =="
 
-# 1) Ir al backend (ajusta la ruta si tu carpeta se llama distinto)
+# 0) Asegurar que existe Python3 dentro del contenedor
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Python3 no encontrado, instalándolo..."
+  apt-get update
+  apt-get install -y python3 python3-venv python3-pip
+fi
+
+# 1) Ir al backend
 cd backend
 
 # 2) Crear entorno virtual si no existe
@@ -25,5 +32,7 @@ export FLASK_ENV=production
 
 echo "Levantando Flask en el puerto $PORT..."
 python app.py
+
+
 
 
