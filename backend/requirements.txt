@@ -1,10 +1,16 @@
-flask==3.0.0
-flask-cors==4.0.0
-flask-jwt-extended==4.6.0
-sqlalchemy==2.0.31
-pymysql==1.1.1
+Flask==3.0.0
+Flask-Cors==4.0.0
+Flask-JWT-Extended==4.6.0
+Flask-SQLAlchemy==3.1.1
+
+SQLAlchemy==2.0.31
+PyMySQL==1.1.1
 python-dotenv==1.0.1
 passlib==1.7.4
-flask_sqlalchemy==3.1.1
-Flask-SocketIO
+
+Flask-SocketIO==5.3.6
+eventlet==0.35.2
+
+cryptography
+
 
