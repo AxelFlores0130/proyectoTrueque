@@ -3,23 +3,27 @@ set -e
 
 echo "== Iniciando contenedor Railway =="
 
-# 1) Asegurar Python y pip dentro del contenedor
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "Instalando Python3 y pip3..."
-  apt-get update
-  apt-get install -y python3 python3-pip
-fi
-
-# 2) Ir al backend e instalar dependencias
+# 1) Ir al backend (ajusta la ruta si tu carpeta se llama distinto)
 cd backend
 
-echo "Instalando dependencias de Python..."
-pip3 install --no-cache-dir -r requirements.txt
+# 2) Crear entorno virtual si no existe
+if [ ! -d ".venv" ]; then
+  echo "Creando entorno virtual de Python..."
+  python3 -m venv .venv
+fi
 
-# 3) Lanzar Flask en el puerto que ponga Railway
+# 3) Activar entorno virtual
+. .venv/bin/activate
+
+# 4) Instalar dependencias dentro del venv
+echo "Instalando dependencias de Python en el venv..."
+pip install --no-cache-dir -r requirements.txt
+
+# 5) Lanzar Flask en el puerto que ponga Railway
 export PORT="${PORT:-5000}"
 export FLASK_ENV=production
 
 echo "Levantando Flask en el puerto $PORT..."
-python3 app.py
+python app.py
+
 
