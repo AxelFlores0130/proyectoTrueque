@@ -1,4 +1,5 @@
 ﻿import os
+from config import Config
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, decode_token
@@ -14,10 +15,8 @@ socketio = SocketIO(cors_allowed_origins="*")
 def create_app():
     app = Flask(__name__, static_folder="static")
 
-    # Configuración de BD
-    app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:root@127.0.0.1:3306/bd_truquefinal?charset=utf8mb4"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["JWT_SECRET_KEY"] = "trueque-dev-secret-change-me"
+    # Cargar configuración desde Config (usa env vars o defaults de config.py)
+    app.config.from_object(Config)
     app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024
 
     print("DB URI usada por app.py ->", app.config["SQLALCHEMY_DATABASE_URI"])
@@ -197,6 +196,6 @@ def on_nuevo_mensaje(data):
 
 if __name__ == "__main__":
     app = create_app()
+    port = int(os.environ.get("PORT", 5000))  # Railway pone PORT, local usa 5000
     # IMPORTANTE: usar socketio.run en lugar de app.run
-    socketio.run(app, debug=True, host="127.0.0.1", port=5000)
-
+    socketio.run(app, debug=True, host="0.0.0.0", port=port)
