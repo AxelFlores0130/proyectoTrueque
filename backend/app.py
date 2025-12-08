@@ -21,12 +21,26 @@ def create_app():
 
     print("DB URI usada por app.py ->", app.config["SQLALCHEMY_DATABASE_URI"])
 
+    # ===============================
+    #   CORS CONFIG (USANDO ENV VAR)
+    # ===============================
+    cors_origins = os.getenv("CORS_ORIGINS", "*")
+    print("CORS_ORIGINS ->", cors_origins)
+
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": cors_origins.split(",") if cors_origins != "*" else "*"
+            }
+        },
+    )
+
     # Inicializar extensiones
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
     JWTManager(app)
     db.init_app(app)
 
-    # Inicializar SocketIO con la app
+    # Inicializar SocketIO con la app (sockets siguen abiertos a todos)
     socketio.init_app(app, cors_allowed_origins="*")
 
     # Crear tablas y sembrar categorías
@@ -199,3 +213,4 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Railway pone PORT, local usa 5000
     # IMPORTANTE: usar socketio.run en lugar de app.run
     socketio.run(app, debug=True, host="0.0.0.0", port=port)
+
