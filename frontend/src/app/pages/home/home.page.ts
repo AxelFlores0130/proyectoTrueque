@@ -37,7 +37,7 @@ import { RouterLink } from '@angular/router';
       </div>
 
       <div class="hero-image">
-        <img src="assets/portada.jpg" alt="Intercambio seguro de productos" />
+        <img src="assets/hero/portada.jpg" alt="Intercambio seguro de productos" />
       </div>
     </section>
 
