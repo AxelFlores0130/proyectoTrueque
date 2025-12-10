@@ -2,6 +2,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';  // 👈 IMPORTANTE
 
 export interface Categoria {
   id_categoria: number;
@@ -25,7 +26,10 @@ export interface Producto {
 
 @Injectable({ providedIn: 'root' })
 export class ProductosService {
-  private baseUrl = 'http://127.0.0.1:5000/api';
+  // 👇 ahora usa environment.apiUrl
+  // en dev:  http://localhost:5000/api
+  // en prod: https://proyectotrueque-production-5fb5.up.railway.app/api
+  private baseUrl = environment.apiUrl;
 
   constructor(
     private http: HttpClient,
@@ -48,7 +52,7 @@ export class ProductosService {
 
     return this.http.get<Producto[]>(`${this.baseUrl}/productos`, {
       params,
-      headers: this.auth.authHeaders(),
+      headers: this.auth.authHeaders(),   // puede ir con o sin token, no afecta
     });
   }
 
@@ -69,23 +73,31 @@ export class ProductosService {
     });
   }
 
-  actualizar(id_producto: number, data: Partial<{
-    id_categoria: number;
-    titulo: string;
-    descripcion: string;
-    valor_estimado: number;
-    ubicacion: string;
-    imagen_url: string | null;
-  }>): Observable<Producto> {
+  actualizar(
+    id_producto: number,
+    data: Partial<{
+      id_categoria: number;
+      titulo: string;
+      descripcion: string;
+      valor_estimado: number;
+      ubicacion: string;
+      imagen_url: string | null;
+    }>
+  ): Observable<Producto> {
     return this.http.put<Producto>(`${this.baseUrl}/productos/${id_producto}`, data, {
       headers: this.auth.authHeaders(),
     });
   }
 
-  actualizarEstado(id_producto: number, estado: 'disponible' | 'baja' | string): Observable<Producto> {
-    return this.http.put<Producto>(`${this.baseUrl}/productos/${id_producto}/estado`, { estado }, {
-      headers: this.auth.authHeaders(),
-    });
+  actualizarEstado(
+    id_producto: number,
+    estado: 'disponible' | 'baja' | string
+  ): Observable<Producto> {
+    return this.http.put<Producto>(
+      `${this.baseUrl}/productos/${id_producto}/estado`,
+      { estado },
+      { headers: this.auth.authHeaders() }
+    );
   }
 
   upload(file: File): Observable<{ url: string }> {
@@ -96,3 +108,4 @@ export class ProductosService {
     });
   }
 }
+

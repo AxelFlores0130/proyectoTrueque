@@ -78,7 +78,7 @@ export class ProductosComponent implements OnInit {
   diferenciaPropuesta: number | null = null;
   guardandoSolicitud = false;
 
-    // Filtro y selección de producto que ofrece
+  // Filtro y selección de producto que ofrece
   busquedaMisProductos = '';
   productoOfreceSeleccionado: ProductoCard | null = null;
 
@@ -90,7 +90,6 @@ export class ProductosComponent implements OnInit {
       (p.descripcion || '').toLowerCase().includes(texto)
     );
   }
-
 
   // ------------------------------------------------
   // MODAL CONFIRMAR BAJA
@@ -252,13 +251,31 @@ export class ProductosComponent implements OnInit {
   // UTILIDADES UI
   // ------------------------------------------------
   resolverImagen(url: string | null): string {
-    return url || 'assets/img/placeholder-producto.png';
+    // Si no hay imagen, usamos placeholder
+    if (!url) {
+      return 'assets/img/placeholder-producto.png';
+    }
+
+    // Si ya viene como URL absoluta, la dejamos tal cual
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    // Base del backend (sin "/api")
+    const baseBackend = this.API.replace('/api', '');
+
+    // Nos aseguramos de que la ruta empiece con "/"
+    if (!url.startsWith('/')) {
+      url = '/' + url;
+    }
+
+    return baseBackend + url;
   }
 
   // ------------------------------------------------
   // MATCH / SOLICITUD
   // ------------------------------------------------
-    crearMatch(p: ProductoCard) {
+  crearMatch(p: ProductoCard) {
     if (!this.isAuth) {
       alert('Inicia sesión para proponer un intercambio.');
       return;
@@ -281,11 +298,11 @@ export class ProductosComponent implements OnInit {
     this.busquedaMisProductos = '';
     this.mostrarModalSolicitud = true;
   }
+
   seleccionarProductoOfrece(mp: ProductoCard) {
     this.productoOfreceId = mp.id_producto;
     this.productoOfreceSeleccionado = mp;
   }
-
 
   cerrarModalSolicitud() {
     if (this.guardandoSolicitud) return;
@@ -293,42 +310,42 @@ export class ProductosComponent implements OnInit {
   }
 
   enviarSolicitud() {
-  if (!this.productoObjetivo) {
-    alert('No se encontró el producto objetivo.');
-    return;
+    if (!this.productoObjetivo) {
+      alert('No se encontró el producto objetivo.');
+      return;
+    }
+
+    this.guardandoSolicitud = true;
+
+    // 👇 Aseguramos que sea número o null
+    let diffNumber: number | null = null;
+    if (this.diferenciaPropuesta !== null && this.diferenciaPropuesta !== undefined) {
+      const parsed = Number(this.diferenciaPropuesta);
+      diffNumber = isNaN(parsed) ? null : parsed;
+    }
+
+    const payload = {
+      id_producto_objetivo: this.productoObjetivo.id_producto,
+      id_producto_ofrece: this.productoOfreceId || undefined,
+      mensaje: this.mensajeSolicitud || undefined,
+      diferencia_propuesta: diffNumber,   // 👈 aquí ya va como número o null
+    };
+
+    console.log('Payload solicitud que se envía:', payload);
+
+    this.solicitudes.crear(payload).subscribe({
+      next: () => {
+        this.guardandoSolicitud = false;
+        this.mostrarModalSolicitud = false;
+        alert('Solicitud enviada correctamente.');
+      },
+      error: (err) => {
+        console.error('Error al crear solicitud', err);
+        this.guardandoSolicitud = false;
+        alert('Error al enviar la solicitud.');
+      },
+    });
   }
-
-  this.guardandoSolicitud = true;
-
-  // 👇 Aseguramos que sea número o null
-  let diffNumber: number | null = null;
-  if (this.diferenciaPropuesta !== null && this.diferenciaPropuesta !== undefined) {
-    const parsed = Number(this.diferenciaPropuesta);
-    diffNumber = isNaN(parsed) ? null : parsed;
-  }
-
-  const payload = {
-    id_producto_objetivo: this.productoObjetivo.id_producto,
-    id_producto_ofrece: this.productoOfreceId || undefined,
-    mensaje: this.mensajeSolicitud || undefined,
-    diferencia_propuesta: diffNumber,   // 👈 aquí ya va como número o null
-  };
-
-  console.log('Payload solicitud que se envía:', payload);
-
-  this.solicitudes.crear(payload).subscribe({
-    next: () => {
-      this.guardandoSolicitud = false;
-      this.mostrarModalSolicitud = false;
-      alert('Solicitud enviada correctamente.');
-    },
-    error: (err) => {
-      console.error('Error al crear solicitud', err);
-      this.guardandoSolicitud = false;
-      alert('Error al enviar la solicitud.');
-    },
-  });
-}
 
   // ------------------------------------------------
   // FORMULARIO / MODAL PRODUCTO
@@ -554,6 +571,7 @@ export class ProductosComponent implements OnInit {
     this.productoAConfirmarBaja = null;
   }
 }
+
 
 
 
