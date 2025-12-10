@@ -6,9 +6,11 @@ bp_upload = Blueprint("upload", __name__, url_prefix="/api/upload")
 
 ALLOWED_EXT = {"png", "jpg", "jpeg", "gif", "webp"}
 
+
 def allowed_filename(name: str):
     ext = (name.rsplit(".", 1)[-1] if "." in name else "").lower()
     return ext in ALLOWED_EXT
+
 
 @bp_upload.post("")
 def upload_file():
@@ -17,6 +19,7 @@ def upload_file():
     f = request.files["archivo"]
     if f.filename == "":
         return jsonify(msg="Archivo sin nombre"), 400
+
     filename = secure_filename(f.filename)
     if not allowed_filename(filename):
         return jsonify(msg="Extensión no permitida"), 400
@@ -35,6 +38,9 @@ def upload_file():
     except Exception as e:
         return jsonify(msg="Error guardando archivo", err=str(e)), 500
 
-    public_url = url_for('static', filename=f'uploads/{name}', _external=True)
+    # ✅ SOLO ruta relativa; igual que lo que ya pusiste en la BD
+    public_url = f"/static/uploads/{name}"
+
     return jsonify({"url": public_url}), 201
+
 
