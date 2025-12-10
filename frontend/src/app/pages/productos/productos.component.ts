@@ -434,53 +434,55 @@ export class ProductosComponent implements OnInit {
     this.guardando = true;
 
     const publicarOEditar = (imagen_url: string | null) => {
-      const body: any = {
-        id_categoria: this.form.id_categoria,
-        titulo: this.form.titulo,
-        descripcion: this.form.descripcion,
-        valor_estimado: this.form.valor_estimado,
-        ubicacion: this.form.ubicacion,
-        imagen_url,
-        // el backend fija id_usuario y estado="disponible"
-      };
+  const body: any = {
+    id_categoria: this.form.id_categoria,
+    titulo: this.form.titulo,
+    descripcion: this.form.descripcion,
+    valor_estimado: this.form.valor_estimado,
+    ubicacion: this.form.ubicacion,
+    imagen_url,
+  };
 
-      const headers = this.authHeaders();
+  if (this.editando && this.form.id_producto) {
+    const id = this.form.id_producto;
+    this.http
+      .put(`${this.API}/productos/${id}`, body, {
+        headers: this.auth.authHeaders(),   // 👈 aquí
+      })
+      .subscribe(
+        () => {
+          this.guardando = false;
+          this.mostrarFormulario = false;
+          alert('Producto actualizado correctamente.');
+          this.cargarProductos();
+        },
+        (err) => {
+          console.error('Error al editar producto', err);
+          this.guardando = false;
+          alert('Error al editar producto.');
+        }
+      );
+  } else {
+    this.http
+      .post(`${this.API}/productos`, body, {
+        headers: this.auth.authHeaders(),   // 👈 y aquí
+      })
+      .subscribe(
+        () => {
+          this.guardando = false;
+          this.mostrarFormulario = false;
+          alert('Producto publicado correctamente.');
+          this.cargarProductos();
+        },
+        (err) => {
+          console.error('Error al crear producto', err);
+          this.guardando = false;
+          alert('Error al publicar producto.');
+        }
+      );
+  }
+};
 
-      if (this.editando && this.form.id_producto) {
-        const id = this.form.id_producto;
-        this.http
-          .put(`${this.API}/productos/${id}`, body, { headers })
-          .subscribe(
-            () => {
-              this.guardando = false;
-              this.mostrarFormulario = false;
-              alert('Producto actualizado correctamente.');
-              this.cargarProductos();
-            },
-            (err) => {
-              console.error('Error al editar producto', err);
-              this.guardando = false;
-              alert('Error al editar producto.');
-            }
-          );
-      } else {
-        this.http
-          .post(`${this.API}/productos`, body, { headers })
-          .subscribe(
-            () => {
-              this.guardando = false;
-              this.mostrarFormulario = false;
-              alert('Producto publicado correctamente.');
-              this.cargarProductos();
-            },
-            (err) => {
-              console.error('Error al crear producto', err);
-              this.guardando = false;
-              alert('Error al publicar producto.');
-            }
-          );
-      }
-    };
 
     // Subida de imagen (si hay archivo nuevo)
     if (this.archivo) {
@@ -527,30 +529,29 @@ export class ProductosComponent implements OnInit {
   }
 
   private cambiarEstadoEnServidor(p: ProductoCard) {
-    const headers = this.authHeaders();
+  this.http
+    .put(
+      `${this.API}/productos/${p.id_producto}/estado`,
+      {},
+      { headers: this.auth.authHeaders() }   // 👈 directo desde AuthService
+    )
+    .subscribe(
+      (res: any) => {
+        const estadoBackend = (res?.estado || '').toString().toLowerCase();
 
-    this.http
-      .put(`${this.API}/productos/${p.id_producto}/estado`, {}, { headers })
-      .subscribe(
-        (res: any) => {
-          const estadoBackend = (res?.estado || '').toString().toLowerCase();
-
-          if (estadoBackend) {
-            p.estado = estadoBackend; // 'disponible' o 'baja'
-          } else {
-            // fallback local
-            p.estado = p.estado === 'disponible' ? 'baja' : 'disponible';
-          }
-
-          // Si quieres recargar todo desde backend:
-          // this.cargarProductos();
-        },
-        (err) => {
-          console.error('Error al cambiar estado del producto', err);
-          alert('Error al cambiar el estado del producto.');
+        if (estadoBackend) {
+          p.estado = estadoBackend; // 'disponible' o 'baja'
+        } else {
+          p.estado = p.estado === 'disponible' ? 'baja' : 'disponible';
         }
-      );
-  }
+      },
+      (err) => {
+        console.error('Error al cambiar estado del producto', err);
+        alert('Error al cambiar el estado del producto.');
+      }
+    );
+}
+
 
   cancelarBaja() {
     if (this.guardandoBaja) return;
