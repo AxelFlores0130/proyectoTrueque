@@ -3,10 +3,11 @@ import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { AuthService } from "./auth.service";
 import { Producto } from "./productos.service";
+import { environment } from "../../environments/environment";  // 👈 IMPORTANTE
 
 export interface SolicitudCard {
   id_solicitud: number;
-  estado: "pendiente" | "aceptado" | "rechazado" | "cancelado"; // 👈 mejor tipado
+  estado: "pendiente" | "aceptado" | "rechazado" | "cancelado";
   mensaje: string;
   creado: string;
   soy_solicitante: boolean;
@@ -25,7 +26,8 @@ export interface SolicitudCard {
 
 @Injectable({ providedIn: "root" })
 export class SolicitudesService {
-  private baseUrl = "http://127.0.0.1:5000/api";
+  // ⬇️ ANTES: "http://127.0.0.1:5000/api"
+  private baseUrl = environment.apiUrl;
 
   constructor(
     private http: HttpClient,
@@ -41,29 +43,23 @@ export class SolicitudesService {
     return this.http.post<SolicitudCard>(
       `${this.baseUrl}/solicitudes`,
       payload,
-      {
-        headers: this.auth.authHeaders(), // 👈 mantenemos JWT
-      }
+      { headers: this.auth.authHeaders() }
     );
   }
 
-  // Recibidas (sólo pendientes, por el backend que ya ajustaste)
+  // Recibidas
   recibidas(): Observable<SolicitudCard[]> {
     return this.http.get<SolicitudCard[]>(
       `${this.baseUrl}/solicitudes/recibidas`,
-      {
-        headers: this.auth.authHeaders(),
-      }
+      { headers: this.auth.authHeaders() }
     );
   }
 
-  // Enviadas (todas, separaremos por estado en el componente)
+  // Enviadas
   enviadas(): Observable<SolicitudCard[]> {
     return this.http.get<SolicitudCard[]>(
       `${this.baseUrl}/solicitudes/enviadas`,
-      {
-        headers: this.auth.authHeaders(),
-      }
+      { headers: this.auth.authHeaders() }
     );
   }
 
@@ -71,9 +67,7 @@ export class SolicitudesService {
     return this.http.put<SolicitudCard>(
       `${this.baseUrl}/solicitudes/${id}/aceptar`,
       {},
-      {
-        headers: this.auth.authHeaders(),
-      }
+      { headers: this.auth.authHeaders() }
     );
   }
 
@@ -81,9 +75,7 @@ export class SolicitudesService {
     return this.http.put<SolicitudCard>(
       `${this.baseUrl}/solicitudes/${id}/rechazar`,
       {},
-      {
-        headers: this.auth.authHeaders(),
-      }
+      { headers: this.auth.authHeaders() }
     );
   }
 
@@ -91,13 +83,11 @@ export class SolicitudesService {
     return this.http.put<SolicitudCard>(
       `${this.baseUrl}/solicitudes/${id}/cancelar`,
       {},
-      {
-        headers: this.auth.authHeaders(),
-      }
+      { headers: this.auth.authHeaders() }
     );
   }
 
-    reofertar(
+  reofertar(
     id: number,
     payload: {
       id_producto_ofrece?: number;
@@ -108,12 +98,10 @@ export class SolicitudesService {
     return this.http.put<SolicitudCard>(
       `${this.baseUrl}/solicitudes/${id}/reofertar`,
       payload,
-      {
-        headers: this.auth.authHeaders(),
-      }
+      { headers: this.auth.authHeaders() }
     );
   }
-
 }
+
 
 
