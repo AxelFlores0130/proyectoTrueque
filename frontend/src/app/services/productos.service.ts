@@ -24,6 +24,13 @@ export interface Producto {
   es_tuyo: boolean;
 }
 
+/** 👇 NUEVO: respuesta de la IA de moderación */
+export interface ModeracionImagenResponse {
+  allowed: boolean;
+  category: string;
+  reason: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProductosService {
   // 👇 ahora usa environment.apiUrl
@@ -107,5 +114,21 @@ export class ProductosService {
       headers: this.auth.authHeaders(),
     });
   }
+
+  // 👇👇👇 NUEVO: llamar a la IA para validar la imagen del producto
+  validarImagenProducto(file: File): Observable<ModeracionImagenResponse> {
+    const formData = new FormData();
+    // el backend espera el campo 'imagen'
+    formData.append('imagen', file);
+
+    return this.http.post<ModeracionImagenResponse>(
+      `${this.baseUrl}/moderacion/imagen-producto`,
+      formData,
+      {
+        headers: this.auth.authHeaders(),  // necesita JWT porque el endpoint tiene @jwt_required
+      }
+    );
+  }
 }
+
 

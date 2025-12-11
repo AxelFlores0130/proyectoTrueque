@@ -72,14 +72,16 @@ def create_app():
     from routes_categorias import bp_cats
     from routes_productos import bp_prod
     from routes_solicitudes import bp_sol
-    from routes_intercambios import bp_intercambios  # 👈 NUEVO
+    from routes_intercambios import bp_intercambios  # 👈 ya lo tenías
+    from routes_moderacion import bp_moderacion      # 👈 NUEVO
 
     app.register_blueprint(bp_auth)
     app.register_blueprint(bp_upload)
     app.register_blueprint(bp_cats)
     app.register_blueprint(bp_prod)
     app.register_blueprint(bp_sol)
-    app.register_blueprint(bp_intercambios)  # 👈 NUEVO
+    app.register_blueprint(bp_intercambios)
+    app.register_blueprint(bp_moderacion)  # 👈 NUEVO
 
     @app.get("/api/health")
     def health():
@@ -213,4 +215,5 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Railway pone PORT, local usa 5000
     # IMPORTANTE: usar socketio.run en lugar de app.run
     socketio.run(app, debug=True, host="0.0.0.0", port=port)
+
 

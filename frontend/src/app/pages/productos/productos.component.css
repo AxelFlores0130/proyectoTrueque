@@ -402,3 +402,32 @@
   font-size: 0.75rem;
   color: #64748b;
 }
+
+.banner-analizando,
+.banner-ok,
+.banner-error {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.banner-analizando {
+  background: #e3f2fd;   /* azul clarito */
+  color: #0f172a;
+}
+
+.banner-ok {
+  background: #e8f5e9;   /* verde clarito */
+  color: #166534;
+}
+
+.banner-error {
+  background: #ffebee;   /* rojo clarito */
+  color: #b91c1c;
+}
+
+.banner-error .motivo {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+}

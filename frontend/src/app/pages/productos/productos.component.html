@@ -100,7 +100,8 @@
       <article
         *ngFor="let p of misProductos"
         class="card-producto"
-        [class.inactivo]="p.estado === 'baja'">
+        [class.inactivo]="p.estado === 'baja'"
+      >
         <div class="card-image" *ngIf="resolverImagen(p.imagen_url) as imgUrl">
           <img [src]="imgUrl" [alt]="p.titulo" />
         </div>
@@ -120,15 +121,19 @@
           <button
             type="button"
             class="btn-secondary"
-            (click)="prepararEditar(p)">
+            (click)="prepararEditar(p)"
+          >
             Editar
           </button>
 
           <!-- Botón naranja para baja, verde para alta -->
           <button
             type="button"
-            [ngClass]="p.estado === 'disponible' ? 'btn-warning' : 'btn-success'"
-            (click)="toggleEstado(p)">
+            [ngClass]="
+              p.estado === 'disponible' ? 'btn-warning' : 'btn-success'
+            "
+            (click)="toggleEstado(p)"
+          >
             {{ p.estado === 'disponible' ? 'Dar de baja' : 'Dar de alta' }}
           </button>
         </div>
@@ -221,6 +226,32 @@
           />
         </div>
 
+        <!-- IA: estado de análisis de la imagen -->
+        <div class="field full" *ngIf="analizandoImagenIA">
+          <div class="banner-analizando">
+            🔍 Analizando imagen con IA para verificar que el producto sea
+            legal…
+          </div>
+        </div>
+
+        <div class="field full" *ngIf="imagenValidaIA === true">
+          <div class="banner-ok">
+            ✅ Imagen aprobada. Puedes publicar este producto.
+          </div>
+        </div>
+
+        <div class="field full" *ngIf="imagenValidaIA === false">
+          <div class="banner-error">
+            🚫 Este producto no puede ser publicado.
+            <div class="motivo">
+              {{
+                motivoRechazoIA ||
+                  'La imagen corresponde a un artículo no permitido.'
+              }}
+            </div>
+          </div>
+        </div>
+
         <div class="field full" *ngIf="previewUrl">
           <label>Vista previa</label>
           <div class="preview-box">
@@ -232,11 +263,19 @@
           <button
             type="button"
             class="btn-secondary"
-            (click)="cerrarFormulario()"
+            (click)="cerrarFormulario()
+            "
           >
             Cancelar
           </button>
-          <button type="submit" class="btn-primary">
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="
+              guardando ||
+              (archivo && (analizandoImagenIA || imagenValidaIA === false))
+            "
+          >
             {{ editando ? 'Guardar cambios' : 'Publicar producto' }}
           </button>
         </div>
@@ -269,61 +308,70 @@
           </div>
           <p><strong>{{ productoObjetivo.titulo }}</strong></p>
           <p class="meta">
-            ${{ productoObjetivo.valor_estimado }} · {{ productoObjetivo.ubicacion }}
+            ${{ productoObjetivo.valor_estimado }} ·
+            {{ productoObjetivo.ubicacion }}
           </p>
         </div>
 
         <div class="field full">
-  <label>Tu producto que ofreces</label>
+          <label>Tu producto que ofreces</label>
 
-  <!-- Buscador sobre tus productos -->
-  <input
-    type="text"
-    class="input"
-    placeholder="Buscar entre mis productos..."
-    [(ngModel)]="busquedaMisProductos"
-    name="buscarMisProductos"
-    *ngIf="misProductos.length > 0"
-    style="margin-bottom: 0.5rem;"
-  />
+          <!-- Buscador sobre tus productos -->
+          <input
+            type="text"
+            class="input"
+            placeholder="Buscar entre mis productos..."
+            [(ngModel)]="busquedaMisProductos"
+            name="buscarMisProductos"
+            *ngIf="misProductos.length > 0"
+            style="margin-bottom: 0.5rem"
+          />
 
-  <p *ngIf="misProductos.length === 0" class="estado">
-    No tienes productos propios para ofrecer. Puedes ofrecer solo diferencia económica.
-  </p>
+          <p *ngIf="misProductos.length === 0" class="estado">
+            No tienes productos propios para ofrecer. Puedes ofrecer solo
+            diferencia económica.
+          </p>
 
-  <!-- Lista de productos propios con imagen -->
-  <div
-    *ngIf="misProductosFiltrados.length > 0"
-    style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.5rem;"
-  >
-    <div
-      *ngFor="let mp of misProductosFiltrados"
-      class="mini-card-producto"
-      [class.seleccionado]="productoOfreceId === mp.id_producto"
-      (click)="seleccionarProductoOfrece(mp)"
-    >
-      <div class="mini-card-image">
-        <img [src]="resolverImagen(mp.imagen_url)" [alt]="mp.titulo" />
-      </div>
-      <div class="mini-card-body">
-        <div class="mini-card-title">{{ mp.titulo }}</div>
-        <div class="mini-card-meta">${{ mp.valor_estimado }}</div>
-      </div>
-    </div>
-  </div>
+          <!-- Lista de productos propios con imagen -->
+          <div
+            *ngIf="misProductosFiltrados.length > 0"
+            style="
+              display: flex;
+              gap: 0.75rem;
+              overflow-x: auto;
+              padding-bottom: 0.5rem;
+            "
+          >
+            <div
+              *ngFor="let mp of misProductosFiltrados"
+              class="mini-card-producto"
+              [class.seleccionado]="productoOfreceId === mp.id_producto"
+              (click)="seleccionarProductoOfrece(mp)"
+            >
+              <div class="mini-card-image">
+                <img
+                  [src]="resolverImagen(mp.imagen_url)"
+                  [alt]="mp.titulo"
+                />
+              </div>
+              <div class="mini-card-body">
+                <div class="mini-card-title">{{ mp.titulo }}</div>
+                <div class="mini-card-meta">${{ mp.valor_estimado }}</div>
+              </div>
+            </div>
+          </div>
 
-  <!-- Vista previa del producto que ofreces -->
-  <div class="preview-box" *ngIf="productoOfreceSeleccionado">
-    <img
-      [src]="resolverImagen(productoOfreceSeleccionado.imagen_url)"
-      [alt]="productoOfreceSeleccionado.titulo"
-    />
-  </div>
-  <p *ngIf="productoOfreceSeleccionado">
-    <strong>{{ productoOfreceSeleccionado.titulo }}</strong>
-  </p>
-</div>
-
+          <!-- Vista previa del producto que ofreces -->
+          <div class="preview-box" *ngIf="productoOfreceSeleccionado">
+            <img
+              [src]="resolverImagen(productoOfreceSeleccionado.imagen_url)"
+              [alt]="productoOfreceSeleccionado.titulo"
+            />
+          </div>
+          <p *ngIf="productoOfreceSeleccionado">
+            <strong>{{ productoOfreceSeleccionado.titulo }}</strong>
+          </p>
+        </div>
 
         <div class="field half">
           <label>Diferencia económica (opcional)</label>
@@ -385,9 +433,16 @@
 
       <div class="form-grid">
         <div class="field full">
-          <p style="font-size:0.95rem; color:#475569; margin-bottom:0.75rem;">
-            ¿Estás seguro de que deseas dar de baja este producto?
-            Dejará de aparecer para otros usuarios, pero podrás volver a darlo de alta cuando quieras.
+          <p
+            style="
+              font-size: 0.95rem;
+              color: #475569;
+              margin-bottom: 0.75rem;
+            "
+          >
+            ¿Estás seguro de que deseas dar de baja este producto? Dejará de
+            aparecer para otros usuarios, pero podrás volver a darlo de alta
+            cuando quieras.
           </p>
 
           <div class="preview-box">
@@ -400,7 +455,8 @@
             <strong>{{ productoAConfirmarBaja.titulo }}</strong>
           </p>
           <p class="meta">
-            ${{ productoAConfirmarBaja.valor_estimado }} · {{ productoAConfirmarBaja.ubicacion }}
+            ${{ productoAConfirmarBaja.valor_estimado }} ·
+            {{ productoAConfirmarBaja.ubicacion }}
           </p>
         </div>
 
@@ -426,6 +482,7 @@
     </div>
   </section>
 </div>
+
 
 
 

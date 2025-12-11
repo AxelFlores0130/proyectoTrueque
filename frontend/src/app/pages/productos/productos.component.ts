@@ -5,6 +5,10 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../services/auth.service';
 import { SolicitudesService } from '../../services/solicitudes.service';
+import {
+  ProductosService,
+  ModeracionImagenResponse,   // ⭐ NUEVO
+} from '../../services/productos.service';
 
 export interface ProductoCard {
   id_producto: number;
@@ -68,6 +72,11 @@ export class ProductosComponent implements OnInit {
   archivo: File | null = null;
   guardando = false;
 
+  // ⭐ NUEVO: estados de la moderación IA
+  analizandoImagenIA = false;
+  imagenValidaIA: boolean | null = null; // true=permitida, false=ilegal, null=sin resultado
+  motivoRechazoIA = '';
+
   // ------------------------------------------------
   // MODAL SOLICITUD / MATCH
   // ------------------------------------------------
@@ -105,7 +114,8 @@ export class ProductosComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private auth: AuthService,
-    private solicitudes: SolicitudesService
+    private solicitudes: SolicitudesService,
+    private productosService: ProductosService   // ⭐ NUEVO
   ) {}
 
   // ------------------------------------------------
@@ -373,6 +383,12 @@ export class ProductosComponent implements OnInit {
     this.previewUrl = null;
     this.archivo = null;
     this.guardando = false;
+
+    // ⭐ Al crear nuevo, reseteamos estados de IA
+    this.analizandoImagenIA = false;
+    this.imagenValidaIA = null;
+    this.motivoRechazoIA = '';
+
     this.mostrarFormulario = true;
   }
 
@@ -393,6 +409,12 @@ export class ProductosComponent implements OnInit {
     this.previewUrl = p.imagen_url || null;
     this.archivo = null;
     this.guardando = false;
+
+    // ⭐ En edición, si no cambias la imagen, no volvemos a analizar
+    this.analizandoImagenIA = false;
+    this.imagenValidaIA = null;
+    this.motivoRechazoIA = '';
+
     this.mostrarFormulario = true;
   }
 
@@ -408,9 +430,32 @@ export class ProductosComponent implements OnInit {
       if (!file) return;
 
       this.archivo = file;
+
       const reader = new FileReader();
       reader.onload = () => (this.previewUrl = reader.result as string);
       reader.readAsDataURL(file);
+
+      // ⭐ Aquí lanzamos la IA para analizar la imagen
+      this.analizandoImagenIA = true;
+      this.imagenValidaIA = null;
+      this.motivoRechazoIA = '';
+
+      this.productosService.validarImagenProducto(file).subscribe({
+        next: (res: ModeracionImagenResponse) => {
+          this.analizandoImagenIA = false;
+          this.imagenValidaIA = res.allowed;
+          this.motivoRechazoIA = res.reason || '';
+
+          console.log('Resultado moderación IA:', res);
+        },
+        error: (err) => {
+          console.error('Error al analizar imagen con IA', err);
+          this.analizandoImagenIA = false;
+          this.imagenValidaIA = null;
+          this.motivoRechazoIA =
+            'No se pudo analizar la imagen. Intenta de nuevo más tarde.';
+        },
+      });
     }
   }
 
@@ -431,58 +476,75 @@ export class ProductosComponent implements OnInit {
       return;
     }
 
+    // ⭐ Reglas de la IA:
+    // Si hay imagen nueva seleccionada, solo dejamos guardar cuando:
+    // - ya terminó el análisis, y
+    // - la IA dijo que está permitido
+    if (this.archivo) {
+      if (this.analizandoImagenIA) {
+        alert('Espera a que la IA termine de analizar la imagen antes de publicar.');
+        return;
+      }
+      if (this.imagenValidaIA === false) {
+        alert(
+          this.motivoRechazoIA ||
+            'La IA detectó que este producto no está permitido en la plataforma.'
+        );
+        return;
+      }
+    }
+
     this.guardando = true;
 
     const publicarOEditar = (imagen_url: string | null) => {
-  const body: any = {
-    id_categoria: this.form.id_categoria,
-    titulo: this.form.titulo,
-    descripcion: this.form.descripcion,
-    valor_estimado: this.form.valor_estimado,
-    ubicacion: this.form.ubicacion,
-    imagen_url,
-  };
+      const body: any = {
+        id_categoria: this.form.id_categoria,
+        titulo: this.form.titulo,
+        descripcion: this.form.descripcion,
+        valor_estimado: this.form.valor_estimado,
+        ubicacion: this.form.ubicacion,
+        imagen_url,
+      };
 
-  if (this.editando && this.form.id_producto) {
-    const id = this.form.id_producto;
-    this.http
-      .put(`${this.API}/productos/${id}`, body, {
-        headers: this.auth.authHeaders(),   // 👈 aquí
-      })
-      .subscribe(
-        () => {
-          this.guardando = false;
-          this.mostrarFormulario = false;
-          alert('Producto actualizado correctamente.');
-          this.cargarProductos();
-        },
-        (err) => {
-          console.error('Error al editar producto', err);
-          this.guardando = false;
-          alert('Error al editar producto.');
-        }
-      );
-  } else {
-    this.http
-      .post(`${this.API}/productos`, body, {
-        headers: this.auth.authHeaders(),   // 👈 y aquí
-      })
-      .subscribe(
-        () => {
-          this.guardando = false;
-          this.mostrarFormulario = false;
-          alert('Producto publicado correctamente.');
-          this.cargarProductos();
-        },
-        (err) => {
-          console.error('Error al crear producto', err);
-          this.guardando = false;
-          alert('Error al publicar producto.');
-        }
-      );
-  }
-};
-
+      if (this.editando && this.form.id_producto) {
+        const id = this.form.id_producto;
+        this.http
+          .put(`${this.API}/productos/${id}`, body, {
+            headers: this.auth.authHeaders(),   // 👈 aquí
+          })
+          .subscribe(
+            () => {
+              this.guardando = false;
+              this.mostrarFormulario = false;
+              alert('Producto actualizado correctamente.');
+              this.cargarProductos();
+            },
+            (err) => {
+              console.error('Error al editar producto', err);
+              this.guardando = false;
+              alert('Error al editar producto.');
+            }
+          );
+      } else {
+        this.http
+          .post(`${this.API}/productos`, body, {
+            headers: this.auth.authHeaders(),   // 👈 y aquí
+          })
+          .subscribe(
+            () => {
+              this.guardando = false;
+              this.mostrarFormulario = false;
+              alert('Producto publicado correctamente.');
+              this.cargarProductos();
+            },
+            (err) => {
+              console.error('Error al crear producto', err);
+              this.guardando = false;
+              alert('Error al publicar producto.');
+            }
+          );
+      }
+    };
 
     // Subida de imagen (si hay archivo nuevo)
     if (this.archivo) {
@@ -529,29 +591,28 @@ export class ProductosComponent implements OnInit {
   }
 
   private cambiarEstadoEnServidor(p: ProductoCard) {
-  this.http
-    .put(
-      `${this.API}/productos/${p.id_producto}/estado`,
-      {},
-      { headers: this.auth.authHeaders() }   // 👈 directo desde AuthService
-    )
-    .subscribe(
-      (res: any) => {
-        const estadoBackend = (res?.estado || '').toString().toLowerCase();
+    this.http
+      .put(
+        `${this.API}/productos/${p.id_producto}/estado`,
+        {},
+        { headers: this.auth.authHeaders() }   // 👈 directo desde AuthService
+      )
+      .subscribe(
+        (res: any) => {
+          const estadoBackend = (res?.estado || '').toString().toLowerCase();
 
-        if (estadoBackend) {
-          p.estado = estadoBackend; // 'disponible' o 'baja'
-        } else {
-          p.estado = p.estado === 'disponible' ? 'baja' : 'disponible';
+          if (estadoBackend) {
+            p.estado = estadoBackend; // 'disponible' o 'baja'
+          } else {
+            p.estado = p.estado === 'disponible' ? 'baja' : 'disponible';
+          }
+        },
+        (err) => {
+          console.error('Error al cambiar estado del producto', err);
+          alert('Error al cambiar el estado del producto.');
         }
-      },
-      (err) => {
-        console.error('Error al cambiar estado del producto', err);
-        alert('Error al cambiar el estado del producto.');
-      }
-    );
-}
-
+      );
+  }
 
   cancelarBaja() {
     if (this.guardandoBaja) return;
@@ -572,6 +633,7 @@ export class ProductosComponent implements OnInit {
     this.productoAConfirmarBaja = null;
   }
 }
+
 
 
 
