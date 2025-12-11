@@ -5,8 +5,10 @@ from decimal import Decimal
 
 db = SQLAlchemy()
 
+
 class Usuario(db.Model):
     __tablename__ = 'usuarios'
+
     id_usuario = db.Column(db.Integer, primary_key=True)
     nombre_completo = db.Column(db.String(100), nullable=False)
     correo = db.Column(db.String(100), unique=True, nullable=False)
@@ -14,16 +16,23 @@ class Usuario(db.Model):
     telefono = db.Column(db.String(20))
     fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
     verificado = db.Column(db.Boolean, default=True)
-    rol = db.Column(db.Enum('cliente', 'administrador', name='rol_enum'), default='cliente')
+    rol = db.Column(
+        db.Enum('cliente', 'administrador', name='rol_enum'),
+        default='cliente'
+    )
+
 
 class Categoria(db.Model):
     __tablename__ = 'categorias'
+
     id_categoria = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(50), nullable=False)
     descripcion = db.Column(db.String(255))
 
+
 class Producto(db.Model):
     __tablename__ = 'productos'
+
     id_producto = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'), nullable=False)
     id_categoria = db.Column(db.Integer, db.ForeignKey('categorias.id_categoria'), nullable=False)
@@ -32,8 +41,9 @@ class Producto(db.Model):
     valor_estimado = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     imagen_url = db.Column(db.String(255))
     ubicacion = db.Column(db.String(120))
-    # En la BD es enum('disponible','en_intercambio','intercambiado')
-        # Lo manejamos como texto sencillo: 'disponible' o 'baja'
+
+    # En la BD original el estado es enum('disponible','en_intercambio','intercambiado')
+    # Aquí lo manejamos como texto sencillo: 'disponible' o 'baja'
     estado = db.Column(db.String(20), nullable=False, default='disponible')
 
     fecha_publicacion = db.Column(db.DateTime, default=datetime.utcnow)
@@ -44,7 +54,6 @@ class Producto(db.Model):
     def estado_api(self):
         # La BD ya guarda directamente 'disponible' o 'baja'
         return self.estado
-
 
     def to_dict(self, current_user_id=None):
         return {
@@ -62,8 +71,10 @@ class Producto(db.Model):
             'fecha_publicacion': self.fecha_publicacion.isoformat() if self.fecha_publicacion else None
         }
 
+
 class Solicitud(db.Model):
     __tablename__ = 'solicitudes'
+
     id_solicitud = db.Column(db.Integer, primary_key=True)
     id_solicitante = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'), nullable=False)
     id_producto_objetivo = db.Column(db.Integer, db.ForeignKey('productos.id_producto'), nullable=False)
@@ -71,8 +82,10 @@ class Solicitud(db.Model):
     mensaje = db.Column(db.Text)
     ubicacion = db.Column(db.String(255))
     fecha_propuesta = db.Column(db.DateTime)
-    # 👇 CAMPO IMPORTANTE
+
+    # Diferencia monetaria propuesta por el solicitante (puede ser null)
     diferencia_propuesta = db.Column(db.Numeric(10, 2), nullable=True)
+
     estado = db.Column(db.String(20), default='pendiente')
     confirmo_solicitante = db.Column(db.Boolean, default=False)
     confirmo_receptor = db.Column(db.Boolean, default=False)
@@ -92,9 +105,16 @@ class Solicitud(db.Model):
             'mensaje': self.mensaje,
             'creado': self.creado.isoformat() if self.creado else None,
             'soy_solicitante': self.id_solicitante == current_user_id,
-            'diferencia_propuesta': float(self.diferencia_propuesta) if self.diferencia_propuesta is not None else None,
-            'producto_objetivo': self.producto_objetivo.to_dict(current_user_id) if self.producto_objetivo else None,
-            'producto_ofrece': self.producto_ofrece.to_dict(current_user_id) if self.producto_ofrece else None,
+            'diferencia_propuesta': float(self.diferencia_propuesta)
+            if self.diferencia_propuesta is not None else None,
+            'producto_objetivo': (
+                self.producto_objetivo.to_dict(current_user_id)
+                if self.producto_objetivo else None
+            ),
+            'producto_ofrece': (
+                self.producto_ofrece.to_dict(current_user_id)
+                if self.producto_ofrece else None
+            ),
             'solicitante': {
                 'id_usuario': self.solicitante.id_usuario,
                 'nombre': self.solicitante.nombre_completo
@@ -106,15 +126,16 @@ class Solicitud(db.Model):
         }
 
 
-
 class Notificacion(db.Model):
     __tablename__ = 'notificaciones'
+
     id_notificacion = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'), nullable=False)
     id_intercambio = db.Column(db.Integer, nullable=True)
     mensaje = db.Column(db.String(255))
     leido = db.Column(db.Boolean, default=False)
     fecha_envio = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 class Intercambio(db.Model):
     __tablename__ = "intercambios"
@@ -128,7 +149,11 @@ class Intercambio(db.Model):
     id_usuario_ofrece = db.Column(db.Integer, db.ForeignKey("usuarios.id_usuario"), nullable=False)
     id_usuario_recibe = db.Column(db.Integer, db.ForeignKey("usuarios.id_usuario"), nullable=False)
 
-    diferencia_monetaria = db.Column(db.Numeric(10, 2), nullable=False, default=Decimal("0.00"))
+    diferencia_monetaria = db.Column(
+        db.Numeric(10, 2),
+        nullable=False,
+        default=Decimal("0.00")
+    )
 
     estado = db.Column(
         db.Enum("pendiente", "aceptado", "cancelado", name="estado_intercambio"),
@@ -155,6 +180,7 @@ class Intercambio(db.Model):
     )
     fecha_limite_confirmacion = db.Column(db.DateTime, nullable=True)
 
+
 class IntercambioMensaje(db.Model):
     __tablename__ = "intercambio_mensajes"
 
@@ -173,4 +199,21 @@ class IntercambioMensaje(db.Model):
     creado = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     intercambio = db.relationship("Intercambio", backref="mensajes")
+
+
+class HistorialIntercambio(db.Model):
+    __tablename__ = "historial_intercambios"
+
+    id_historial = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_intercambio = db.Column(
+        db.Integer,
+        db.ForeignKey("intercambios.id_intercambio"),
+        nullable=False
+    )
+    estado = db.Column(db.String(50), nullable=False)
+    fecha_cambio = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    comentario = db.Column(db.Text, nullable=True)
+
+    intercambio = db.relationship("Intercambio", backref="historial")
+
 

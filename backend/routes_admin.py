@@ -5,6 +5,7 @@ from models import db, Usuario, Categoria, Intercambio, HistorialIntercambio, Pr
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/api/admin")
 
+
 def _require_admin() -> Usuario | None:
     """
     Obtiene el usuario del token y valida que sea administrador.
@@ -42,7 +43,8 @@ def admin_get_usuarios():
             "correo": u.correo,
             "telefono": u.telefono,
             "fecha_registro": u.fecha_registro.isoformat() if u.fecha_registro else None,
-            "verificado": u.verificado,
+            # lo devolvemos como 0/1 para que el front lo trate fácil
+            "verificado": 1 if u.verificado else 0,
             "rol": u.rol,
         })
     return jsonify(data), 200
@@ -56,29 +58,38 @@ def admin_update_verificado(id_usuario: int):
         return jsonify({"error": "No autorizado"}), 403
 
     body = request.get_json() or {}
-    verificado = body.get("verificado")  # booleano esperado
+    verificado = body.get("verificado")  # booleano esperado (true/false)
 
     usuario = Usuario.query.get_or_404(id_usuario)
-    usuario.verificado = 1 if verificado else 0
+
+    # En el modelo es Boolean, pero podemos guardar True/False sin problema.
+    usuario.verificado = bool(verificado)
     db.session.commit()
 
     return jsonify({
         "id_usuario": usuario.id_usuario,
-        "verificado": usuario.verificado
+        "verificado": 1 if usuario.verificado else 0
     }), 200
 
 
 @admin_bp.route("/usuarios/<int:id_usuario>/historial", methods=["GET"])
 @jwt_required()
 def admin_historial_usuario(id_usuario: int):
+    """
+    Historial de intercambios de un usuario.
+    Usamos tus campos reales de Intercambio:
+      - id_usuario_ofrece / id_usuario_recibe
+      - id_producto_solicitado / id_producto_ofrecido
+      - fecha_solicitud
+    """
     admin = _require_admin()
     if not admin:
         return jsonify({"error": "No autorizado"}), 403
 
-    # Ajusta estos campos a como realmente se llaman en tu modelo Intercambio
+    # Tus campos reales
     intercambios = Intercambio.query.filter(
-        (Intercambio.id_usuario_solicitante == id_usuario) |
-        (Intercambio.id_usuario_receptor == id_usuario)
+        (Intercambio.id_usuario_ofrece == id_usuario) |
+        (Intercambio.id_usuario_recibe == id_usuario)
     ).all()
 
     resultado = []
@@ -87,13 +98,14 @@ def admin_historial_usuario(id_usuario: int):
             id_intercambio=it.id_intercambio
         ).order_by(HistorialIntercambio.fecha_cambio.desc()).all()
 
-        producto_obj = Producto.query.get(it.id_producto_objetivo)
-        producto_ofr = Producto.query.get(getattr(it, "id_producto_ofrece", None)) if getattr(it, "id_producto_ofrece", None) else None
+        # Productos según tu modelo
+        producto_obj = Producto.query.get(it.id_producto_solicitado)
+        producto_ofr = Producto.query.get(it.id_producto_ofrecido) if it.id_producto_ofrecido else None
 
         resultado.append({
             "id_intercambio": it.id_intercambio,
             "estado_actual": it.estado,
-            "creado": it.creado.isoformat() if getattr(it, "creado", None) else None,
+            "creado": it.fecha_solicitud.isoformat() if it.fecha_solicitud else None,
             "producto_objetivo": producto_obj.titulo if producto_obj else None,
             "producto_ofrece": producto_ofr.titulo if producto_ofr else None,
             "historial": [
@@ -151,3 +163,4 @@ def admin_create_categoria():
         "nombre": nueva.nombre,
         "descripcion": nueva.descripcion
     }), 201
+
