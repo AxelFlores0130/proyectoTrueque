@@ -13,7 +13,8 @@ import { AuthService } from "../../services/auth.service";
     <section class="hero">
       <div class="left">
         <h1>Con <span class="brand">Trueque</span>, intercambia lo que tienes por lo que quieres</h1>
-        <p class="lead">La forma más segura y profesional de intercambiar productos. Verifica usuarios, acuerda encuentros y realiza transacciones protegidas.</p>
+        <p class="lead">La forma más segura y profesional de intercambiar productos.
+          publica tu producto, acuerda encuentros y realiza tu el intercambio.</p>
 
         <div class="cta">
           <a class="btn primary" routerLink="/productos">Explorar productos</a>
@@ -21,8 +22,8 @@ import { AuthService } from "../../services/auth.service";
         </div>
 
         <ul class="bullets">
-          <li>✔ Verificación de usuarios</li>
-          <li>✔ Transacciones protegidas</li>
+          <li>✔ chat integrado</li>
+          <li>✔ intercambios seguros</li>
           <li>✔ Soporte 24/7</li>
         </ul>
       </div>

@@ -12,7 +12,7 @@ import { RouterLink } from '@angular/router';
         <h1>Con Trueque, tus productos valen más</h1>
         <p class="hero-sub">
           La forma más segura y profesional de intercambiar productos.
-          Verifica usuarios, acuerda encuentros y realiza transacciones protegidas.
+          publica tu producto, acuerda encuentros y realiza tu el intercambio.
         </p>
 
         <div class="hero-cta">
@@ -23,11 +23,11 @@ import { RouterLink } from '@angular/router';
         <div class="hero-badges">
           <span>
             <span class="dot"></span>
-            Verificación de usuarios
+            chat integrado
           </span>
           <span>
             <span class="dot"></span>
-            Transacciones protegidas
+            intercambios seguros
           </span>
           <span>
             <span class="dot"></span>
@@ -78,7 +78,7 @@ import { RouterLink } from '@angular/router';
       </div>
       <div class="stat">
         <span class="value">100%</span>
-        <span class="label">Transacciones seguras</span>
+        <span class="label">intercambios seguros</span>
       </div>
     </section>
   `,

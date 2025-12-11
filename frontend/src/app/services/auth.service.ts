@@ -6,11 +6,13 @@ import { Observable } from "rxjs";
 
 @Injectable({ providedIn: "root" })
 export class AuthService {
-  private API = environment.apiUrl;
+  private API = environment.apiUrl; // ej: https://tu-backend.railway.app/api
 
   constructor(private http: HttpClient) {}
 
-  // LOGIN: recibe un solo objeto { correo, contrasena }
+  // =======================
+  // LOGIN NORMAL (correo + contraseña)
+  // =======================
   login(payload: { correo: string; contrasena: string }): Observable<any> {
     const body = {
       correo: (payload.correo || "").toLowerCase(),
@@ -19,7 +21,6 @@ export class AuthService {
 
     return this.http.post<any>(`${this.API}/auth/login`, body).pipe(
       tap(res => {
-        // Soportar varias formas de respuesta por si acaso
         const token =
           res?.token ||
           res?.access_token ||
@@ -35,32 +36,86 @@ export class AuthService {
         if (token && usuario) {
           this.setSession(token, usuario);
         } else {
-          console.warn('Respuesta de login sin token/usuario esperado:', res);
+          console.warn("Respuesta de login sin token/usuario esperado:", res);
         }
       })
     );
   }
 
+  // =======================
   // REGISTRO
+  // =======================
+  // ⚠️ Aunque recibimos "rol" desde algunos componentes viejos,
+  //    aquí YA NO lo mandamos al backend.
+  //    Tampoco mandamos "verificado": eso lo pone el backend.
   register(
     nombre: string,
     correo: string,
     telefono: string,
     contrasena: string,
-    rol: "cliente" | "administrador" = "cliente"
+    _rol: "cliente" | "administrador" = "cliente" // se ignora, el backend fuerza "cliente"
   ) {
     const body = {
-      nombre_completo: nombre,
-      correo: (correo || "").toLowerCase(),
-      telefono: telefono || "",
-      contrasena,
-      rol,
-      verificado: 1
+      nombre_completo: nombre.trim(),
+      correo: (correo || "").toLowerCase().trim(),
+      telefono: (telefono || "").trim(),
+      contrasena
+      // rol y verificado LOS DEFINE EL BACKEND:
+      //  - rol = "cliente"
+      //  - verificado = 1
+      //  - fecha_registro = NOW()
     };
+
     return this.http.post(`${this.API}/auth/register`, body);
   }
 
-  // SESIÓN
+  // =======================
+  // GOOGLE AUTH (redirección)
+  // =======================
+
+  /**
+   * URL del backend que inicia el flujo de Google (OAuth / GIS redirect).
+   * En el backend tendrías algo como:
+   *   GET /api/auth/google/login
+   * que redirige a Google.
+   */
+  getGoogleAuthUrl(): string {
+    return `${this.API}/auth/google/login`;
+  }
+
+  /**
+   * Si usas Google Identity Services (botón que te da un "credential" JWT),
+   * puedes mandar ese credential a tu backend en /auth/google.
+   * Ejemplo de uso en el front:
+   *   this.auth.googleLogin(credential).subscribe(...)
+   */
+  googleLogin(credential: string): Observable<any> {
+    return this.http.post<any>(`${this.API}/auth/google`, { credential }).pipe(
+      tap(res => {
+        const token =
+          res?.token ||
+          res?.access_token ||
+          res?.jwt ||
+          null;
+
+        const usuario =
+          res?.usuario ||
+          res?.user ||
+          res?.datos ||
+          null;
+
+        if (token && usuario) {
+          this.setSession(token, usuario);
+        } else {
+          console.warn("Respuesta de login Google sin token/usuario esperado:", res);
+        }
+      })
+    );
+  }
+
+  // =======================
+  // MANEJO DE SESIÓN
+  // =======================
   setSession(token: string, usuario: any) {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(usuario));
@@ -91,10 +146,9 @@ export class AuthService {
     if (!user) return null;
 
     // Ajusta estos nombres según cómo venga del backend
-    // (seguramente es id_usuario)
     return (
       user.id_usuario ??  // lo más probable
-      user.id ??          // por si viene como id
+      user.id ??          // fallback
       null
     );
   }
@@ -116,4 +170,5 @@ export class AuthService {
     return headers;
   }
 }
+
 

@@ -1,3 +1,4 @@
+// frontend/src/app/pages/registro/registro.page.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -6,7 +7,7 @@ import { AuthService } from '../../services/auth.service';
 
 @Component({
   standalone: true,
-  selector: 'app-register-page',
+  selector: 'app-registro',
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <section class="auth-wrapper">
@@ -32,7 +33,7 @@ import { AuthService } from '../../services/auth.service';
           </div>
 
           <label>
-            Teléfono (opcional)
+            Teléfono
             <input type="tel" formControlName="telefono" placeholder="Número de contacto" />
           </label>
 
@@ -64,6 +65,18 @@ import { AuthService } from '../../services/auth.service';
           </button>
         </form>
 
+        <div class="divider">
+          <span>o continúa con</span>
+        </div>
+
+        <button type="button" class="google-btn" (click)="onGoogleRegister()">
+          <img
+            src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
+            alt="Google"
+          />
+          Crear cuenta con Google
+        </button>
+
         <p class="alt">
           ¿Ya tienes cuenta?
           <a routerLink="/login">Inicia sesión</a>
@@ -78,6 +91,7 @@ import { AuthService } from '../../services/auth.service';
       align-items:flex-start;
       justify-content:center;
       padding-top:60px;
+      background:#f5f7fb;
     }
     .auth-card{
       background:#ffffff;
@@ -116,10 +130,12 @@ import { AuthService } from '../../services/auth.service';
       border:1px solid #cbd5e1;
       font-size:14px;
       outline:none;
+      background:#f9fafb;
     }
     input:focus{
       border-color:#0ea5e9;
       box-shadow:0 0 0 1px rgba(14,165,233,.3);
+      background:#ffffff;
     }
     .error{
       color:#b91c1c;
@@ -129,6 +145,7 @@ import { AuthService } from '../../services/auth.service';
     .ok{
       color:#15803d;
       font-size:13px;
+      margin-top:4px;
     }
     button{
       margin-top:8px;
@@ -162,9 +179,43 @@ import { AuthService } from '../../services/auth.service';
       font-weight:600;
       text-decoration:none;
     }
+    .divider{
+      display:flex;
+      align-items:center;
+      margin:18px 0 10px;
+      font-size:12px;
+      color:#9ca3af;
+      gap:8px;
+    }
+    .divider::before,
+    .divider::after{
+      content:'';
+      flex:1;
+      height:1px;
+      background:#e5e7eb;
+    }
+    .google-btn{
+      width:100%;
+      padding:9px 14px;
+      border-radius:999px;
+      border:1px solid #d1d5db;
+      background:#ffffff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      cursor:pointer;
+      font-size:14px;
+      font-weight:500;
+      margin-bottom:8px;
+    }
+    .google-btn img{
+      width:18px;
+      height:18px;
+    }
   `]
 })
-export class RegisterPage {
+export class RegistroPage {
   form: FormGroup;
   submitted = false;
   loading = false;
@@ -219,6 +270,11 @@ export class RegisterPage {
           'No fue posible crear la cuenta. Intenta de nuevo.';
       }
     });
+  }
+
+  onGoogleRegister() {
+    // de momento, redirige al backend de Google login cuando lo tengas
+    window.location.href = this.auth.getGoogleAuthUrl();
   }
 }
 
