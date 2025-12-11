@@ -6,42 +6,39 @@
       otros usuarios.
     </p>
 
-    <!-- 🔥 Nuevo botón para ir a los intercambios en proceso -->
-  <button
-    class="btn-ir-intercambios"
-    routerLink="/intercambios"
-    style="margin-top: 8px;"
-  >
-    Ver intercambios en proceso
-  </button>
+    <!-- 🔥 Botón para ir a intercambios en proceso -->
+    <button
+      class="btn-ir-intercambios"
+      routerLink="/intercambios"
+      style="margin-top: 8px;"
+    >
+      Ver intercambios en proceso
+    </button>
 
-
-    <!-- Tabs para móvil -->
     <!-- Tabs principales -->
-<div class="tabs-solicitudes">
-  <button
-    class="tab-btn"
-    [class.active]="tab === 'recibidas'"
-    (click)="cambiarTab('recibidas')"
-  >
-    Solicitudes recibidas
-    <span class="badge-num" *ngIf="recibidasPendientes.length">
-      {{ recibidasPendientes.length }}
-    </span>
-  </button>
+    <div class="tabs-solicitudes">
+      <button
+        class="tab-btn"
+        [class.active]="tab === 'recibidas'"
+        (click)="cambiarTab('recibidas')"
+      >
+        Solicitudes recibidas
+        <span class="badge-num" *ngIf="recibidasPendientes.length">
+          {{ recibidasPendientes.length }}
+        </span>
+      </button>
 
-  <button
-    class="tab-btn"
-    [class.active]="tab === 'enviadas'"
-    (click)="cambiarTab('enviadas')"
-  >
-    Solicitudes enviadas
-    <span class="badge-num" *ngIf="enviadasPendientes.length">
-      {{ enviadasPendientes.length }}
-    </span>
-  </button>
-</div>
-
+      <button
+        class="tab-btn"
+        [class.active]="tab === 'enviadas'"
+        (click)="cambiarTab('enviadas')"
+      >
+        Solicitudes enviadas
+        <span class="badge-num" *ngIf="enviadasPendientes.length">
+          {{ enviadasPendientes.length }}
+        </span>
+      </button>
+    </div>
   </div>
 
   <div class="solicitudes-columns">
@@ -57,22 +54,22 @@
       </p>
 
       <div class="solicitud-card" *ngFor="let s of recibidasPendientes">
-  <div class="solicitud-header">
-    <!-- PERFIL DEL OTRO (SOLICITANTE) -->
-    <div class="perfil">
-      <div class="avatar">
-        {{ s.solicitante.nombre[0] | uppercase }}
-      </div>
-      <div class="perfil-info">
-        <div class="perfil-nombre">{{ s.solicitante.nombre }}</div>
-        <div class="perfil-label">Usuario que te solicita</div>
-      </div>
-    </div>
+        <div class="solicitud-header">
+          <!-- PERFIL DEL OTRO (SOLICITANTE) -->
+          <div class="perfil">
+            <div class="avatar">
+              {{ s.solicitante.nombre[0] | uppercase }}
+            </div>
+            <div class="perfil-info">
+              <div class="perfil-nombre">{{ s.solicitante.nombre }}</div>
+              <div class="perfil-label">Usuario que te solicita</div>
+            </div>
+          </div>
 
-    <span [class]="getEstadoClass(s.estado)">
-      {{ getEstadoLabel(s.estado) }}
-    </span>
-  </div>
+          <span [class]="getEstadoClass(s.estado)">
+            {{ getEstadoLabel(s.estado) }}
+          </span>
+        </div>
 
         <div class="solicitud-body">
           <div class="productos-row">
@@ -80,7 +77,7 @@
               <div class="producto-label">Te ofrece</div>
               <img
                 *ngIf="s.producto_ofrece?.imagen_url"
-                [src]="s.producto_ofrece?.imagen_url"
+                [src]="resolverImagen(s.producto_ofrece?.imagen_url || null)"
                 alt="Producto ofrece"
               />
               <div class="producto-title">
@@ -88,7 +85,7 @@
               </div>
               <div class="producto-valor" *ngIf="s.producto_ofrece">
                 Valor estimado:
-                ${{ s.producto_ofrece.valor_estimado | number : "1.0-0" }}
+                ${{ s.producto_ofrece.valor_estimado | number : '1.0-0' }}
               </div>
             </div>
 
@@ -98,7 +95,7 @@
               <div class="producto-label">Por tu producto</div>
               <img
                 *ngIf="s.producto_objetivo?.imagen_url"
-                [src]="s.producto_objetivo?.imagen_url"
+                [src]="resolverImagen(s.producto_objetivo?.imagen_url || null)"
                 alt="Producto objetivo"
               />
               <div class="producto-title">
@@ -106,16 +103,14 @@
               </div>
               <div class="producto-valor" *ngIf="s.producto_objetivo">
                 Valor estimado:
-                ${{ s.producto_objetivo.valor_estimado | number : "1.0-0" }}
+                ${{ s.producto_objetivo.valor_estimado | number : '1.0-0' }}
               </div>
             </div>
           </div>
 
           <div class="diferencia" *ngIf="s.diferencia_propuesta != null">
             Diferencia propuesta:
-            <strong
-              >${{ s.diferencia_propuesta | number : "1.0-0" }}</strong
-            >
+            <strong>${{ s.diferencia_propuesta | number : '1.0-0' }}</strong>
           </div>
 
           <div class="mensaje" *ngIf="s.mensaje">
@@ -145,22 +140,22 @@
       <div *ngIf="enviadasPendientes.length">
         <h3>Pendientes</h3>
         <div class="solicitud-card" *ngFor="let s of enviadasPendientes">
-  <div class="solicitud-header">
-    <!-- PERFIL DEL OTRO (RECEPTOR) -->
-    <div class="perfil">
-      <div class="avatar">
-        {{ s.receptor?.nombre[0] | uppercase }}
-      </div>
-      <div class="perfil-info">
-        <div class="perfil-nombre">{{ s.receptor?.nombre }}</div>
-        <div class="perfil-label">Dueño del producto objetivo</div>
-      </div>
-    </div>
+          <div class="solicitud-header">
+            <!-- PERFIL DEL OTRO (RECEPTOR) -->
+            <div class="perfil">
+              <div class="avatar">
+                {{ s.receptor?.nombre[0] | uppercase }}
+              </div>
+              <div class="perfil-info">
+                <div class="perfil-nombre">{{ s.receptor?.nombre }}</div>
+                <div class="perfil-label">Dueño del producto objetivo</div>
+              </div>
+            </div>
 
-    <span [class]="getEstadoClass(s.estado)">
-      {{ getEstadoLabel(s.estado) }}
-    </span>
-  </div>
+            <span [class]="getEstadoClass(s.estado)">
+              {{ getEstadoLabel(s.estado) }}
+            </span>
+          </div>
 
           <div class="solicitud-body">
             <div class="productos-row">
@@ -168,7 +163,7 @@
                 <div class="producto-label">Tú ofreces</div>
                 <img
                   *ngIf="s.producto_ofrece?.imagen_url"
-                  [src]="s.producto_ofrece?.imagen_url"
+                  [src]="resolverImagen(s.producto_ofrece?.imagen_url || null)"
                   alt="Tu producto"
                 />
                 <div class="producto-title">
@@ -176,7 +171,7 @@
                 </div>
                 <div class="producto-valor" *ngIf="s.producto_ofrece">
                   Valor estimado:
-                  ${{ s.producto_ofrece.valor_estimado | number : "1.0-0" }}
+                  ${{ s.producto_ofrece.valor_estimado | number : '1.0-0' }}
                 </div>
               </div>
 
@@ -186,7 +181,7 @@
                 <div class="producto-label">Por</div>
                 <img
                   *ngIf="s.producto_objetivo?.imagen_url"
-                  [src]="s.producto_objetivo?.imagen_url"
+                  [src]="resolverImagen(s.producto_objetivo?.imagen_url || null)"
                   alt="Producto objetivo"
                 />
                 <div class="producto-title">
@@ -194,7 +189,7 @@
                 </div>
                 <div class="producto-valor" *ngIf="s.producto_objetivo">
                   Valor estimado:
-                  ${{ s.producto_objetivo.valor_estimado | number : "1.0-0" }}
+                  ${{ s.producto_objetivo.valor_estimado | number : '1.0-0' }}
                 </div>
               </div>
             </div>
@@ -202,7 +197,7 @@
             <div class="diferencia" *ngIf="s.diferencia_propuesta != null">
               Diferencia propuesta:
               <strong
-                >${{ s.diferencia_propuesta | number : "1.0-0" }}</strong
+                >${{ s.diferencia_propuesta | number : '1.0-0' }}</strong
               >
             </div>
 
@@ -220,100 +215,98 @@
       </div>
 
       <!-- RECHAZADAS -->
-      <!-- RECHAZADAS -->
-<div *ngIf="enviadasRechazadas.length">
-  <h3>Rechazadas</h3>
+      <div *ngIf="enviadasRechazadas.length">
+        <h3>Rechazadas</h3>
 
-  <div class="solicitud-card rechazado" *ngFor="let s of enviadasRechazadas">
-    <div class="solicitud-header">
-      <!-- PERFIL DEL RECEPTOR -->
-      <div class="perfil">
-        <div class="avatar">
-          {{ s.receptor?.nombre[0] | uppercase }}
-        </div>
-        <div class="perfil-info">
-          <div class="perfil-nombre">{{ s.receptor?.nombre }}</div>
-          <div class="perfil-label">Tu oferta fue rechazada</div>
-        </div>
-      </div>
+        <div class="solicitud-card rechazado" *ngFor="let s of enviadasRechazadas">
+          <div class="solicitud-header">
+            <!-- PERFIL DEL RECEPTOR -->
+            <div class="perfil">
+              <div class="avatar">
+                {{ s.receptor?.nombre[0] | uppercase }}
+              </div>
+              <div class="perfil-info">
+                <div class="perfil-nombre">{{ s.receptor?.nombre }}</div>
+                <div class="perfil-label">Tu oferta fue rechazada</div>
+              </div>
+            </div>
 
-      <span [class]="getEstadoClass(s.estado)">
-        {{ getEstadoLabel(s.estado) }}
-      </span>
-    </div>
+            <span [class]="getEstadoClass(s.estado)">
+              {{ getEstadoLabel(s.estado) }}
+            </span>
+          </div>
 
-    <div class="solicitud-body">
-      <div class="productos-row">
-        <div class="producto-mini">
-          <div class="producto-label">Tú ofrecías</div>
-          <img
-            *ngIf="s.producto_ofrece?.imagen_url"
-            [src]="s.producto_ofrece?.imagen_url"
-            alt="Tu producto"
-          />
-          <div class="producto-title">
-            {{ s.producto_ofrece?.titulo || "Sin producto" }}
+          <div class="solicitud-body">
+            <div class="productos-row">
+              <div class="producto-mini">
+                <div class="producto-label">Tú ofrecías</div>
+                <img
+                  *ngIf="s.producto_ofrece?.imagen_url"
+                  [src]="resolverImagen(s.producto_ofrece?.imagen_url || null)"
+                  alt="Tu producto"
+                />
+                <div class="producto-title">
+                  {{ s.producto_ofrece?.titulo || "Sin producto" }}
+                </div>
+              </div>
+
+              <div class="arrow">⇄</div>
+
+              <div class="producto-mini">
+                <div class="producto-label">Por</div>
+                <img
+                  *ngIf="s.producto_objetivo?.imagen_url"
+                  [src]="resolverImagen(s.producto_objetivo?.imagen_url || null)"
+                  alt="Producto objetivo"
+                />
+                <div class="producto-title">
+                  {{ s.producto_objetivo?.titulo }}
+                </div>
+              </div>
+            </div>
+
+            <div class="mensaje-info">
+              Esta solicitud fue rechazada. Puedes ajustar la diferencia económica y
+              volver a enviarla.
+            </div>
+          </div>
+
+          <!-- FORMULARIO DE REOFERTA (MISMA FILA) -->
+          <div
+            class="reoferta-box"
+            *ngIf="reOfertaAbiertaId === s.id_solicitud"
+          >
+            <label>
+              Nueva diferencia económica:
+              <input
+                type="number"
+                min="0"
+                step="1"
+                [(ngModel)]="nuevaDiferencia"
+              />
+            </label>
+
+            <div class="solicitud-actions">
+              <button class="btn-secondary" (click)="cerrarReoferta()">
+                Cancelar
+              </button>
+              <button class="btn-primary" (click)="enviarReoferta(s)">
+                Enviar de nuevo
+              </button>
+            </div>
+          </div>
+
+          <!-- Botón para abrir el formulario -->
+          <div
+            class="solicitud-actions"
+            *ngIf="reOfertaAbiertaId !== s.id_solicitud"
+          >
+            <button class="btn-primary" (click)="abrirReoferta(s)">
+              Volver a ofertar
+            </button>
           </div>
         </div>
-
-        <div class="arrow">⇄</div>
-
-        <div class="producto-mini">
-          <div class="producto-label">Por</div>
-          <img
-            *ngIf="s.producto_objetivo?.imagen_url"
-            [src]="s.producto_objetivo?.imagen_url"
-            alt="Producto objetivo"
-          />
-          <div class="producto-title">
-            {{ s.producto_objetivo?.titulo }}
-          </div>
-        </div>
       </div>
-
-      <div class="mensaje-info">
-        Esta solicitud fue rechazada. Puedes ajustar la diferencia económica y
-        volver a enviarla.
-      </div>
-    </div>
-
-    <!-- FORMULARIO DE REOFERTA (MISMA FILA) -->
-    <div
-      class="reoferta-box"
-      *ngIf="reOfertaAbiertaId === s.id_solicitud"
-    >
-      <label>
-        Nueva diferencia económica:
-        <input
-          type="number"
-          min="0"
-          step="1"
-          [(ngModel)]="nuevaDiferencia"
-        />
-      </label>
-
-      <div class="solicitud-actions">
-        <button class="btn-secondary" (click)="cerrarReoferta()">
-          Cancelar
-        </button>
-        <button class="btn-primary" (click)="enviarReoferta(s)">
-          Enviar de nuevo
-        </button>
-      </div>
-    </div>
-
-    <!-- Botón para abrir el formulario -->
-    <div
-      class="solicitud-actions"
-      *ngIf="reOfertaAbiertaId !== s.id_solicitud"
-    >
-      <button class="btn-primary" (click)="abrirReoferta(s)">
-        Volver a ofertar
-      </button>
-    </div>
-  </div>
-</div>
-
 
       <!-- ACEPTADAS / CANCELADAS las usaremos después para "Intercambios en proceso" -->
     </section>
@@ -323,3 +316,4 @@
 <ng-template #loadingTpl>
   <div class="loading">Cargando solicitudes...</div>
 </ng-template>
+
