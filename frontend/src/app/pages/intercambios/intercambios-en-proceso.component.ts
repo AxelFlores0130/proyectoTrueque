@@ -5,6 +5,7 @@ import {
   IntercambiosService,
   IntercambioCard,
 } from "../../services/intercambios.service";
+import { environment } from "../../../environments/environment";  // 👈 NUEVO
 
 @Component({
   selector: "app-intercambios-en-proceso",
@@ -33,7 +34,10 @@ export class IntercambiosEnProcesoComponent implements OnInit {
         this.intercambios = res;
         this.cargando = false;
       },
-      error: () => (this.cargando = false),
+      error: (err) => {
+        console.error("Error al cargar intercambios en proceso", err);
+        this.cargando = false;
+      },
     });
   }
 
@@ -47,4 +51,24 @@ export class IntercambiosEnProcesoComponent implements OnInit {
       next: () => this.cargar(),
     });
   }
+
+  // 👇 Igual que en productos / solicitudes
+  resolverImagen(url: string | null | undefined): string {
+    if (!url) {
+      return "assets/img/placeholder-producto.png";
+    }
+
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+
+    const baseBackend = environment.apiUrl.replace("/api", "");
+
+    if (!url.startsWith("/")) {
+      url = "/" + url;
+    }
+
+    return baseBackend + url;
+  }
 }
+

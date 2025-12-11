@@ -1,7 +1,8 @@
 import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
-import { AuthService } from "./auth.service";   // 👈 IMPORTANTE
+import { AuthService } from "./auth.service";
+import { environment } from "../../environments/environment";  // 👈 NUEVO
 
 export interface IntercambioCard {
   id_intercambio: number;
@@ -15,7 +16,7 @@ export interface IntercambioCard {
   producto_ofrece?: {
     id_producto: number;
     titulo: string;
-    imagen?: string | null;
+    imagen?: string | null;      // 👈 aquí luego usaremos resolverImagen(...)
     precio?: number | null;
   } | null;
   producto_objetivo: {
@@ -46,23 +47,29 @@ export interface MensajeIntercambio {
 
 @Injectable({ providedIn: "root" })
 export class IntercambiosService {
-  private baseUrl = "http://127.0.0.1:5000/api/intercambios";
+  // ❌ ANTES:
+  // private baseUrl = "http://127.0.0.1:5000/api/intercambios";
+
+  // ✅ AHORA: usar la misma base del backend que en el resto
+  private baseUrl = `${environment.apiUrl}/intercambios`;
 
   constructor(
     private http: HttpClient,
-    private auth: AuthService      // 👈 inyectamos AuthService
+    private auth: AuthService
   ) {}
 
   listarEnProceso(): Observable<IntercambioCard[]> {
-    return this.http.get<IntercambioCard[]>(`${this.baseUrl}/en_proceso`, {
-      headers: this.auth.authHeaders(),   // 👈 aquí va el token
-    });
+    return this.http.get<IntercambioCard[]>(
+      `${this.baseUrl}/en_proceso`,
+      { headers: this.auth.authHeaders() }
+    );
   }
 
   obtenerDetalle(id_intercambio: number): Observable<IntercambioDetalle> {
-    return this.http.get<IntercambioDetalle>(`${this.baseUrl}/${id_intercambio}`, {
-      headers: this.auth.authHeaders(),
-    });
+    return this.http.get<IntercambioDetalle>(
+      `${this.baseUrl}/${id_intercambio}`,
+      { headers: this.auth.authHeaders() }
+    );
   }
 
   cancelar(id_intercambio: number): Observable<any> {
@@ -88,4 +95,5 @@ export class IntercambiosService {
     );
   }
 }
+
 
