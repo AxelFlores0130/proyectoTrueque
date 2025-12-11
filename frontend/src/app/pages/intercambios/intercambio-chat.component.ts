@@ -10,6 +10,7 @@ import {
 import { ChatService } from "../../services/chat.service";
 import { AuthService } from "../../services/auth.service";
 import { Subscription } from "rxjs";
+import { environment } from "../../../environments/environment";  // 👈 OJO: 3 puntos
 
 @Component({
   selector: "app-intercambio-chat",
@@ -27,6 +28,9 @@ export class IntercambioChatComponent implements OnInit, OnDestroy {
 
   private subMensajes?: Subscription;
 
+  // Base del backend
+  private API = environment.apiUrl;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -37,7 +41,7 @@ export class IntercambioChatComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.id_intercambio = Number(this.route.snapshot.paramMap.get("id"));
-    this.idUsuarioActual = this.auth.getUserId(); // ajusta a tu AuthService
+    this.idUsuarioActual = this.auth.getUserId();
 
     this.cargarIntercambio();
     this.cargarMensajes();
@@ -136,4 +140,25 @@ export class IntercambioChatComponent implements OnInit, OnDestroy {
   volver(): void {
     this.router.navigate(["/intercambios"]);
   }
+
+  // --------- IMÁGENES: igual que en productos / solicitudes ----------
+  resolverImagen(url: string | null | undefined): string {
+    if (!url) {
+      return "assets/img/placeholder-producto.png";
+    }
+
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+
+    const baseBackend = this.API.replace("/api", "");
+
+    if (!url.startsWith("/")) {
+      url = "/" + url;
+    }
+
+    return baseBackend + url;
+  }
 }
+
+

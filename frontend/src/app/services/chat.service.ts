@@ -3,22 +3,28 @@ import { io, Socket } from "socket.io-client";
 import { Observable, Subject } from "rxjs";
 import { MensajeIntercambio } from "./intercambios.service";
 import { AuthService } from "./auth.service";
+import { environment } from "../../environments/environment";   // 👈 IMPORTANTE
 
 @Injectable({ providedIn: "root" })
 export class ChatService {
   private socket?: Socket;
   private mensajes$ = new Subject<MensajeIntercambio>();
 
+  // 👇 Base del backend sin "/api" (funciona en local y en producción)
+  private socketUrl = environment.apiUrl.replace("/api", "");
+
   constructor(private auth: AuthService) {}
 
   private ensureSocket(): void {
     if (this.socket) return;
 
-    const token = this.auth.getToken(); // ajusta según tu AuthService
+    const token = this.auth.getToken(); // desde tu AuthService
 
-    this.socket = io("http://127.0.0.1:5000", {
+    this.socket = io(this.socketUrl, {
       transports: ["websocket"],
       query: { token },
+      // Si en algún momento cambias el path de socket.io en el backend,
+      // aquí podrías agregar: path: "/socket.io"
     });
 
     this.socket.on("mensaje_recibido", (msg: MensajeIntercambio) => {
@@ -66,3 +72,4 @@ export class ChatService {
     this.socket = undefined;
   }
 }
+

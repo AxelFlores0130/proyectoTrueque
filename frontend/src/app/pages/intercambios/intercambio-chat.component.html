@@ -45,15 +45,36 @@
     confirma el intercambio.
   </div>
 
-  <!-- (Opcional) pequeño resumen de productos -->
+  <!-- Resumen de productos con imágenes -->
   <div class="resumen-productos">
     <div class="resumen-col">
       <h4>Tú ofreces</h4>
-      <p>{{ intercambio?.producto_ofrece?.titulo || "Solo diferencia en dinero" }}</p>
+
+      <div class="resumen-producto">
+        <img
+          *ngIf="intercambio?.producto_ofrece?.imagen"
+          class="resumen-img"
+          [src]="resolverImagen(intercambio?.producto_ofrece?.imagen || null)"
+          alt="Producto que ofreces"
+        />
+        <p>
+          {{ intercambio?.producto_ofrece?.titulo || "Solo diferencia en dinero" }}
+        </p>
+      </div>
     </div>
+
     <div class="resumen-col">
       <h4>Tú recibes</h4>
-      <p>{{ intercambio?.producto_objetivo?.titulo }}</p>
+
+      <div class="resumen-producto">
+        <img
+          *ngIf="intercambio?.producto_objetivo?.imagen"
+          class="resumen-img"
+          [src]="resolverImagen(intercambio?.producto_objetivo?.imagen || null)"
+          alt="Producto que recibes"
+        />
+        <p>{{ intercambio?.producto_objetivo?.titulo }}</p>
+      </div>
     </div>
   </div>
 
@@ -95,4 +116,5 @@
     </button>
   </div>
 </div>
+
 
