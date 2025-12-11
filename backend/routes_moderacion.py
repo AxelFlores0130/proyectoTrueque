@@ -1,5 +1,6 @@
-# backend/routes_moderacion.py
+# routes_moderacion.py
 
+import os
 import base64
 import json
 from flask import Blueprint, request, jsonify
@@ -8,109 +9,124 @@ from openai import OpenAI
 
 bp_moderacion = Blueprint("moderacion", __name__, url_prefix="/api/moderacion")
 
-# Usa la API key desde la variable de entorno OPENAI_API_KEY
-client = OpenAI()
+# Cliente de OpenAI usando la variable de entorno
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 
 @bp_moderacion.route("/imagen", methods=["POST"])
-@jwt_required(optional=True)
+@jwt_required(optional=True)  # opcional: permite que funcione aunque no mandes token
 def moderar_imagen():
-    """
-    Analiza una imagen (y opcionalmente título/descripcion) para decidir
-    si el producto es legal o ilegal para publicar en la app.
+    try:
+        # 1) Verificar que venga el archivo
+        if "imagen" not in request.files:
+            return jsonify({
+                "allowed": True,
+                "category": "sin_imagen",
+                "reason": "No se envió ninguna imagen, se permite por defecto."
+            }), 200
 
-    Espera un FormData con:
-      - archivo: File (imagen)
-      - titulo: string (opcional)
-      - descripcion: string (opcional)
-    """
+        file = request.files["imagen"]
+        image_bytes = file.read()
 
-    if "archivo" not in request.files:
-        return jsonify({"ok": False, "error": "No se envió archivo"}), 400
+        if not image_bytes:
+            return jsonify({
+                "allowed": True,
+                "category": "imagen_vacia",
+                "reason": "La imagen está vacía, se permite por defecto."
+            }), 200
 
-    file = request.files["archivo"]
-    raw = file.read()
-    if not raw:
-        return jsonify({"ok": False, "error": "Archivo vacío"}), 400
+        # 2) Codificar la imagen en base64 para enviarla al modelo
+        b64_image = base64.b64encode(image_bytes).decode("utf-8")
 
-    # Texto adicional
-    titulo = request.form.get("titulo") or ""
-    descripcion = request.form.get("descripcion") or ""
+        # 3) Llamar a OpenAI con visión
+        prompt_text = """
+Eres un sistema de moderación para una app de trueques entre personas.
 
-    # Pasamos la imagen como base64 data URL
-    b64 = base64.b64encode(raw).decode("utf-8")
-    data_url = f"data:{file.mimetype};base64,{b64}"
+Debes decidir si la imagen muestra contenido NO permitido según esta lista:
+- Alcohol (botellas, latas, copas de bebidas alcohólicas, vinos, licores, cerveza, etc.)
+- Tabaco, cigarros, vapeadores, cigarrillos electrónicos.
+- Drogas o sustancias ilegales.
+- Armas (pistolas, rifles, cuchillos de combate, etc.).
+- Contenido sexual explícito o desnudos.
+- Violencia gráfica (sangre, heridas graves).
+- Cualquier producto claramente ilegal de vender o intercambiar.
 
-    system_prompt = """
-Eres un moderador de contenido para una aplicación de trueque de productos.
+Responde SOLO con una de estas dos formas (sin explicaciones extra):
 
-Tu tarea es decidir si un producto es LEGAL o ILEGAL para publicar,
-basándote en la IMAGEN y en el TEXTO que te damos (título y descripción).
+1) "permitido"
+   -> si la imagen NO muestra nada de la lista anterior.
 
-CONSIDERA ILEGAL (DEBES BLOQUEAR) cualquier producto que parezca ser:
-- Drogas o sustancias ilegales (marihuana, cocaína, cristal, etc.).
-- Vapes, cigarros electrónicos, pods, cartuchos, juul, etc.
-- Cigarros de tabaco tradicionales, puros, tabaco para fumar, etc.
-- Bebidas alcohólicas (cerveza, vino, tequila, vodka, whisky, ron, mezcal, etc.).
-- Armas de fuego (pistolas, rifles, escopetas), municiones.
-- Armas blancas peligrosas (cuchillos tácticos, navajas automáticas, machetes de combate).
-- Explosivos, fuegos artificiales peligrosos o pirotecnia fuerte.
-- Medicamentos controlados o con receta, frascos de pastillas sospechosas.
-- Documentos personales: INE, pasaporte, licencia, tarjeta bancaria, etc.
-- Productos sexuales explícitos o para adultos.
-
-SI HAY CUALQUIER DUDA razonable de que pueda ser de estas categorías,
-clasifica como ILEGAL.
-
-Responde SIEMPRE y SOLO en JSON con este formato EXACTO:
-{
-  "is_illegal": true o false,
-  "reason": "explicación corta en español"
-}
+2) "bloqueado - CATEGORÍA"
+   -> si ves algo de la lista; por ejemplo:
+   - "bloqueado - alcohol"
+   - "bloqueado - tabaco"
+   - "bloqueado - armas"
+   - "bloqueado - drogas"
+   - "bloqueado - contenido_sexual"
+   - "bloqueado - violencia"
 """
 
-    user_content = f"Título: {titulo}\nDescripción: {descripcion}\nAnaliza si el producto parece ilegal según las reglas."
-
-    try:
-        resp = client.chat.completions.create(
-            model="gpt-4.1-mini",
-            response_format={"type": "json_object"},
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": system_prompt},
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": user_content},
+                        {"type": "text", "text": prompt_text},
                         {
-                            "type": "input_image",
-                            "image_url": {"url": data_url}
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{b64_image}"
+                            },
                         },
                     ],
-                },
+                }
             ],
-            max_tokens=128,
+            temperature=0,
         )
 
-        content = resp.choices[0].message.content
-        data = json.loads(content)
+        # 4) Recuperar el texto de respuesta
+        message = response.choices[0].message
 
-        is_illegal = bool(data.get("is_illegal"))
-        reason = data.get("reason") or ""
+        # En la API nueva, content suele ser una lista de bloques
+        if isinstance(message.content, list):
+            # Tomamos el primer bloque de texto
+            text_result = ""
+            for part in message.content:
+                if hasattr(part, "text"):
+                    text_result += part.text
+        else:
+            text_result = message.content or ""
 
-        return jsonify(
-            {
-                "ok": True,
-                "is_illegal": is_illegal,
-                "reason": reason,
-            }
-        ), 200
+        text_result = (text_result or "").strip().lower()
+
+        allowed = True
+        category = "ninguna"
+
+        if "bloqueado" in text_result:
+            allowed = False
+            # Intentar extraer categoría después del guion
+            if "-" in text_result:
+                category = text_result.split("-", 1)[1].strip()
+            else:
+                category = "contenido_no_permitido"
+        else:
+            allowed = True
+            category = "permitido"
+
+        return jsonify({
+            "allowed": allowed,
+            "category": category,
+            "reason": text_result
+        }), 200
 
     except Exception as e:
-        print("ERROR moderando imagen:", e)
-        return jsonify(
-            {
-                "ok": False,
-                "error": "Error al analizar la imagen con IA",
-            }
-        ), 500
+        # 5) Si algo truena, ya NO devolvemos 500
+        print("Error en /api/moderacion/imagen:", repr(e), flush=True)
+        return jsonify({
+            "allowed": True,   # si quieres ser estricto, cámbialo a False
+            "category": "error",
+            "reason": "No se pudo analizar la imagen con IA, se permite por defecto."
+        }), 200
+
 
