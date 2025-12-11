@@ -1,6 +1,7 @@
 ﻿import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';              // ⭐ NUEVO
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';  // 👈 IMPORTANTE
 
@@ -24,11 +25,9 @@ export interface Producto {
   es_tuyo: boolean;
 }
 
-/** 👇 NUEVO: respuesta de la IA de moderación */
 export interface ModeracionImagenResponse {
   allowed: boolean;
-  category: string;
-  reason: string;
+  reason?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -115,20 +114,42 @@ export class ProductosService {
     });
   }
 
-  // 👇👇👇 NUEVO: llamar a la IA para validar la imagen del producto
-  validarImagenProducto(file: File): Observable<ModeracionImagenResponse> {
-    const formData = new FormData();
-    // el backend espera el campo 'imagen'
-    formData.append('imagen', file);
+  // ⭐⭐ NUEVO: llamar a /api/moderacion/imagen y mapear is_illegal -> allowed
+  validarImagenProducto(
+    file: File,
+    titulo?: string,
+    descripcion?: string
+  ): Observable<ModeracionImagenResponse> {
+    const fd = new FormData();
+    fd.append('archivo', file);
+    if (titulo) fd.append('titulo', titulo);
+    if (descripcion) fd.append('descripcion', descripcion);
 
-    return this.http.post<ModeracionImagenResponse>(
-      `${this.baseUrl}/moderacion/imagen-producto`,
-      formData,
-      {
-        headers: this.auth.authHeaders(),  // necesita JWT porque el endpoint tiene @jwt_required
-      }
-    );
+    return this.http
+      .post<any>(`${this.baseUrl}/moderacion/imagen`, fd, {
+        headers: this.auth.authHeaders(),
+      })
+      .pipe(
+        map((res: any) => {
+          const ok = !!res.ok;
+          const isIllegal = !!res.is_illegal;
+          const reason = res.reason || '';
+
+          if (!ok) {
+            return {
+              allowed: false,
+              reason: reason || 'La IA no pudo analizar la imagen.',
+            };
+          }
+
+          return {
+            allowed: !isIllegal,   // 👈 clave: ilegal => allowed=false
+            reason,
+          };
+        })
+      );
   }
 }
+
 
 

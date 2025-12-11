@@ -440,7 +440,10 @@ export class ProductosComponent implements OnInit {
       this.imagenValidaIA = null;
       this.motivoRechazoIA = '';
 
-      this.productosService.validarImagenProducto(file).subscribe({
+      this.productosService
+  .validarImagenProducto(file, this.form.titulo, this.form.descripcion)
+  .subscribe({
+
         next: (res: ModeracionImagenResponse) => {
           this.analizandoImagenIA = false;
           this.imagenValidaIA = res.allowed;

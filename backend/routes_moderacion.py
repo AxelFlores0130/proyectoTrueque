@@ -1,4 +1,4 @@
-# routes_moderacion.py
+# backend/routes_moderacion.py
 
 import base64
 import json
@@ -8,99 +8,109 @@ from openai import OpenAI
 
 bp_moderacion = Blueprint("moderacion", __name__, url_prefix="/api/moderacion")
 
-# Usa la OPENAI_API_KEY del entorno
+# Usa la API key desde la variable de entorno OPENAI_API_KEY
 client = OpenAI()
 
 
-@bp_moderacion.route("/imagen-producto", methods=["POST"])
-@jwt_required()
-def moderar_imagen_producto():
+@bp_moderacion.route("/imagen", methods=["POST"])
+@jwt_required(optional=True)
+def moderar_imagen():
     """
-    Recibe una imagen (campo 'imagen') y devuelve:
-    {
-      "allowed": bool,
-      "category": "ok|drogas|alcohol|vape|cigarros|arma|documento|otro_prohibido",
-      "reason": "texto breve en español"
-    }
+    Analiza una imagen (y opcionalmente título/descripcion) para decidir
+    si el producto es legal o ilegal para publicar en la app.
+
+    Espera un FormData con:
+      - archivo: File (imagen)
+      - titulo: string (opcional)
+      - descripcion: string (opcional)
     """
-    file = request.files.get("imagen")
-    if not file:
-        return jsonify({"error": "No se envió ninguna imagen"}), 400
 
-    # Leer bytes y convertir a data URL para el modelo
-    image_bytes = file.read()
-    base64_image = base64.b64encode(image_bytes).decode("utf-8")
-    mime = file.mimetype or "image/jpeg"
-    data_url = f"data:{mime};base64,{base64_image}"
+    if "archivo" not in request.files:
+        return jsonify({"ok": False, "error": "No se envió archivo"}), 400
 
-    instrucciones = """
-Eres un filtro de imágenes para una plataforma de trueque de productos.
+    file = request.files["archivo"]
+    raw = file.read()
+    if not raw:
+        return jsonify({"ok": False, "error": "Archivo vacío"}), 400
 
-Recibes la foto de UN producto. Debes decidir si se puede publicar según estas reglas:
+    # Texto adicional
+    titulo = request.form.get("titulo") or ""
+    descripcion = request.form.get("descripcion") or ""
 
-PROHIBIDOS (no se pueden publicar):
-- Drogas ilegales, marihuana, cocaína, pastillas de venta controlada, jeringas con drogas.
-- Medicamentos controlados (recetados) o sustancias peligrosas.
-- Cigarros, cigarrillos, tabaco.
-- Vapes, cigarros electrónicos, pods.
-- Alcohol en cualquier presentación (botellas, latas, shots, cajas de vino, etc.).
-- Armas de fuego (pistolas, rifles, escopetas), armas blancas peligrosas (cuchillos de combate, navajas tácticas), municiones, explosivos.
-- Documentos oficiales o personales: INE/IFE, pasaporte, licencia, tarjetas bancarias, cheques, actas de nacimiento, títulos, etc.
-- Cualquier cosa obviamente ilegal o muy peligrosa de vender.
+    # Pasamos la imagen como base64 data URL
+    b64 = base64.b64encode(raw).decode("utf-8")
+    data_url = f"data:{file.mimetype};base64,{b64}"
 
-PERMITIDOS (sí se pueden publicar):
-- Ropa, zapatos, accesorios.
-- Electrónicos, celulares, laptops, consolas.
-- Juguetes, libros, muebles, decoración, etc.
+    system_prompt = """
+Eres un moderador de contenido para una aplicación de trueque de productos.
 
-Responde ÚNICAMENTE un JSON válido con este formato EXACTO (sin texto adicional):
+Tu tarea es decidir si un producto es LEGAL o ILEGAL para publicar,
+basándote en la IMAGEN y en el TEXTO que te damos (título y descripción).
 
+CONSIDERA ILEGAL (DEBES BLOQUEAR) cualquier producto que parezca ser:
+- Drogas o sustancias ilegales (marihuana, cocaína, cristal, etc.).
+- Vapes, cigarros electrónicos, pods, cartuchos, juul, etc.
+- Cigarros de tabaco tradicionales, puros, tabaco para fumar, etc.
+- Bebidas alcohólicas (cerveza, vino, tequila, vodka, whisky, ron, mezcal, etc.).
+- Armas de fuego (pistolas, rifles, escopetas), municiones.
+- Armas blancas peligrosas (cuchillos tácticos, navajas automáticas, machetes de combate).
+- Explosivos, fuegos artificiales peligrosos o pirotecnia fuerte.
+- Medicamentos controlados o con receta, frascos de pastillas sospechosas.
+- Documentos personales: INE, pasaporte, licencia, tarjeta bancaria, etc.
+- Productos sexuales explícitos o para adultos.
+
+SI HAY CUALQUIER DUDA razonable de que pueda ser de estas categorías,
+clasifica como ILEGAL.
+
+Responde SIEMPRE y SOLO en JSON con este formato EXACTO:
 {
-  "allowed": true o false,
-  "category": "ok" o "drogas" o "alcohol" o "vape" o "cigarros" o "arma" o "documento" o "otro_prohibido",
-  "reason": "explicación muy corta en español"
+  "is_illegal": true o false,
+  "reason": "explicación corta en español"
 }
 """
 
+    user_content = f"Título: {titulo}\nDescripción: {descripcion}\nAnaliza si el producto parece ilegal según las reglas."
+
     try:
-        resp = client.responses.create(
+        resp = client.chat.completions.create(
             model="gpt-4.1-mini",
-            input=[
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": system_prompt},
                 {
                     "role": "user",
                     "content": [
-                        {"type": "input_text", "text": instrucciones},
-                        {"type": "input_image", "image_url": data_url},
+                        {"type": "text", "text": user_content},
+                        {
+                            "type": "input_image",
+                            "image_url": {"url": data_url}
+                        },
                     ],
-                }
+                },
             ],
+            max_tokens=128,
         )
 
-        raw_text = resp.output_text  # la IA devuelve el JSON como texto
-        data = json.loads(raw_text)
+        content = resp.choices[0].message.content
+        data = json.loads(content)
 
-        allowed = bool(data.get("allowed", False))
-        category = data.get("category", "otro_prohibido")
-        reason = data.get("reason", "")
+        is_illegal = bool(data.get("is_illegal"))
+        reason = data.get("reason") or ""
 
         return jsonify(
             {
-                "allowed": allowed,
-                "category": category,
+                "ok": True,
+                "is_illegal": is_illegal,
                 "reason": reason,
             }
         ), 200
 
-    except json.JSONDecodeError:
-        # Por si la IA no responde un JSON perfecto
-        return jsonify({
-            "allowed": False,
-            "category": "otro_prohibido",
-            "reason": "No se pudo interpretar la respuesta de la IA. Intenta con otra foto."
-        }), 200
-
     except Exception as e:
-        print("Error en moderación de imagen:", e)
-        return jsonify({
-            "error": "No se pudo analizar la imagen en este momento. Inténtalo de nuevo."
-        }), 500
+        print("ERROR moderando imagen:", e)
+        return jsonify(
+            {
+                "ok": False,
+                "error": "Error al analizar la imagen con IA",
+            }
+        ), 500
+
