@@ -14,31 +14,37 @@ client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 
 @bp_moderacion.route("/imagen", methods=["POST"])
-@jwt_required(optional=True)  # opcional: permite que funcione aunque no mandes token
+@jwt_required(optional=True)
 def moderar_imagen():
     try:
-        # 1) Verificar que venga el archivo
-        if "imagen" not in request.files:
+        # 1) Intentar obtener el archivo con varios nombres posibles
+        file = (
+            request.files.get("imagen")
+            or request.files.get("file")
+            or (next(iter(request.files.values())) if request.files else None)
+        )
+
+        if not file:
+            # 👉 No se ve archivo, pero lo tratamos como PERMITIDO
             return jsonify({
                 "allowed": True,
-                "category": "sin_imagen",
+                "category": "permitido",
                 "reason": "No se envió ninguna imagen, se permite por defecto."
             }), 200
 
-        file = request.files["imagen"]
         image_bytes = file.read()
 
         if not image_bytes:
+            # 👉 Imagen vacía, también PERMITIDO
             return jsonify({
                 "allowed": True,
-                "category": "imagen_vacia",
+                "category": "permitido",
                 "reason": "La imagen está vacía, se permite por defecto."
             }), 200
 
-        # 2) Codificar la imagen en base64 para enviarla al modelo
+        # 2) Codificar la imagen en base64
         b64_image = base64.b64encode(image_bytes).decode("utf-8")
 
-        # 3) Llamar a OpenAI con visión
         prompt_text = """
 Eres un sistema de moderación para una app de trueques entre personas.
 
@@ -85,12 +91,9 @@ Responde SOLO con una de estas dos formas (sin explicaciones extra):
             temperature=0,
         )
 
-        # 4) Recuperar el texto de respuesta
         message = response.choices[0].message
 
-        # En la API nueva, content suele ser una lista de bloques
         if isinstance(message.content, list):
-            # Tomamos el primer bloque de texto
             text_result = ""
             for part in message.content:
                 if hasattr(part, "text"):
@@ -101,18 +104,14 @@ Responde SOLO con una de estas dos formas (sin explicaciones extra):
         text_result = (text_result or "").strip().lower()
 
         allowed = True
-        category = "ninguna"
+        category = "permitido"
 
         if "bloqueado" in text_result:
             allowed = False
-            # Intentar extraer categoría después del guion
             if "-" in text_result:
                 category = text_result.split("-", 1)[1].strip()
             else:
                 category = "contenido_no_permitido"
-        else:
-            allowed = True
-            category = "permitido"
 
         return jsonify({
             "allowed": allowed,
@@ -121,12 +120,14 @@ Responde SOLO con una de estas dos formas (sin explicaciones extra):
         }), 200
 
     except Exception as e:
-        # 5) Si algo truena, ya NO devolvemos 500
         print("Error en /api/moderacion/imagen:", repr(e), flush=True)
+        # 👉 En caso de error de IA, también PERMITIDO para no tronar el flujo
         return jsonify({
-            "allowed": True,   # si quieres ser estricto, cámbialo a False
-            "category": "error",
+            "allowed": True,
+            "category": "permitido",
             "reason": "No se pudo analizar la imagen con IA, se permite por defecto."
         }), 200
+    
+
 
 
