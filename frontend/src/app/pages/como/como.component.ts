@@ -11,7 +11,7 @@ import { AuthService } from "../../services/auth.service";
     <section class="wrap">
       <h1>¿Cómo funciona Trueque?</h1>
       <ol class="steps">
-        <li><strong>Regístrate y verifica tu cuenta.</strong> Creamos un entorno confiable para todos.</li>
+        <li><strong>Regístrate.</strong> Creamos un entorno confiable para todos.</li>
         <li><strong>Publica tus productos.</strong> Sube fotos, elige categoría y añade valor estimado.</li>
         <li><strong>Explora y haz match.</strong> Encuentra productos que te interesen y envía una solicitud.</li>
         <li><strong>Acuerden lugar y hora.</strong> Usa el chat de la solicitud para definir el punto de encuentro.</li>

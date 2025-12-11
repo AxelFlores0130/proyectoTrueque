@@ -43,8 +43,7 @@ import { CommonModule } from '@angular/common';
           <h2>4. Acepta el intercambio</h2>
           <p>
             Cuando ambas partes estén de acuerdo, confirman el intercambio. 
-            La app registrará el acuerdo y, si hay diferencia en efectivo, 
-            podrás pagarla de forma segura dentro de la plataforma.
+            La app registrará el acuerdo y, si hay diferencia en efectivo no confirmes hasta recibir tu dinero.
           </p>
         </article>
 
@@ -52,7 +51,7 @@ import { CommonModule } from '@angular/common';
           <h2>5. Encuentro y cierre</h2>
           <p>
             Acuerdan un punto de encuentro y horario. Después del intercambio,
-            se registra en tu historial y puedes dejar una reseña de la otra persona.
+            se registra en tu historial.
           </p>
         </article>
       </div>

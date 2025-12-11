@@ -1,19 +1,33 @@
 ﻿import { Injectable } from "@angular/core";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { environment } from "../../environments/environment";
-import { tap } from "rxjs/operators";
+import { tap, map } from "rxjs/operators";
 import { Observable } from "rxjs";
+import { Router } from "@angular/router";
+
+export interface UsuarioLogueado {
+  id_usuario: number;
+  nombre_completo: string;
+  correo: string;
+  telefono: string;
+  rol: "cliente" | "administrador" | string;
+  verificado: number;
+  fecha_registro?: string | null;
+}
 
 @Injectable({ providedIn: "root" })
 export class AuthService {
   private API = environment.apiUrl; // ej: https://tu-backend.railway.app/api
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {}
 
   // =======================
   // LOGIN NORMAL (correo + contraseña)
   // =======================
-  login(payload: { correo: string; contrasena: string }): Observable<any> {
+  login(payload: { correo: string; contrasena: string }): Observable<void> {
     const body = {
       correo: (payload.correo || "").toLowerCase(),
       contrasena: payload.contrasena
@@ -27,7 +41,7 @@ export class AuthService {
           res?.jwt ||
           null;
 
-        const usuario =
+        const usuario: UsuarioLogueado =
           res?.usuario ||
           res?.user ||
           res?.datos ||
@@ -35,19 +49,26 @@ export class AuthService {
 
         if (token && usuario) {
           this.setSession(token, usuario);
+
+          // 👇 detectar rol y redirigir
+          const rol = (usuario.rol || "").toLowerCase();
+          if (rol === "administrador") {
+            this.router.navigate(["/admin"]);
+          } else {
+            // ruta normal de cliente (ajusta si tu ruta es otra)
+            this.router.navigate(["/productos"]);
+          }
         } else {
           console.warn("Respuesta de login sin token/usuario esperado:", res);
         }
-      })
+      }),
+      map(() => void 0)
     );
   }
 
   // =======================
   // REGISTRO
   // =======================
-  // ⚠️ Aunque recibimos "rol" desde algunos componentes viejos,
-  //    aquí YA NO lo mandamos al backend.
-  //    Tampoco mandamos "verificado": eso lo pone el backend.
   register(
     nombre: string,
     correo: string,
@@ -60,10 +81,7 @@ export class AuthService {
       correo: (correo || "").toLowerCase().trim(),
       telefono: (telefono || "").trim(),
       contrasena
-      // rol y verificado LOS DEFINE EL BACKEND:
-      //  - rol = "cliente"
-      //  - verificado = 1
-      //  - fecha_registro = NOW()
+      // rol y verificado LOS DEFINE EL BACKEND
     };
 
     return this.http.post(`${this.API}/auth/register`, body);
@@ -73,23 +91,11 @@ export class AuthService {
   // GOOGLE AUTH (redirección)
   // =======================
 
-  /**
-   * URL del backend que inicia el flujo de Google (OAuth / GIS redirect).
-   * En el backend tendrías algo como:
-   *   GET /api/auth/google/login
-   * que redirige a Google.
-   */
   getGoogleAuthUrl(): string {
     return `${this.API}/auth/google/login`;
   }
 
-  /**
-   * Si usas Google Identity Services (botón que te da un "credential" JWT),
-   * puedes mandar ese credential a tu backend en /auth/google.
-   * Ejemplo de uso en el front:
-   *   this.auth.googleLogin(credential).subscribe(...)
-   */
-  googleLogin(credential: string): Observable<any> {
+  googleLogin(credential: string): Observable<void> {
     return this.http.post<any>(`${this.API}/auth/google`, { credential }).pipe(
       tap(res => {
         const token =
@@ -98,7 +104,7 @@ export class AuthService {
           res?.jwt ||
           null;
 
-        const usuario =
+        const usuario: UsuarioLogueado =
           res?.usuario ||
           res?.user ||
           res?.datos ||
@@ -106,17 +112,25 @@ export class AuthService {
 
         if (token && usuario) {
           this.setSession(token, usuario);
+
+          const rol = (usuario.rol || "").toLowerCase();
+          if (rol === "administrador") {
+            this.router.navigate(["/admin"]);
+          } else {
+            this.router.navigate(["/productos"]);
+          }
         } else {
           console.warn("Respuesta de login Google sin token/usuario esperado:", res);
         }
-      })
+      }),
+      map(() => void 0)
     );
   }
 
   // =======================
   // MANEJO DE SESIÓN
   // =======================
-  setSession(token: string, usuario: any) {
+  setSession(token: string, usuario: UsuarioLogueado) {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(usuario));
   }
@@ -132,10 +146,10 @@ export class AuthService {
     return localStorage.getItem("token");
   }
 
-  getUser(): any {
+  getUser(): UsuarioLogueado | null {
     const raw = localStorage.getItem("user");
     try {
-      return raw ? JSON.parse(raw) : null;
+      return raw ? (JSON.parse(raw) as UsuarioLogueado) : null;
     } catch {
       return null;
     }
@@ -144,11 +158,9 @@ export class AuthService {
   getUserId(): number | null {
     const user = this.getUser();
     if (!user) return null;
-
-    // Ajusta estos nombres según cómo venga del backend
     return (
       user.id_usuario ??  // lo más probable
-      user.id ??          // fallback
+      (user as any).id ?? // fallback
       null
     );
   }
@@ -157,8 +169,15 @@ export class AuthService {
     return !!this.getToken();
   }
 
+  // 👇 NUEVO: para guards y UI
+  isAdmin(): boolean {
+    const user = this.getUser();
+    return (user?.rol || "").toLowerCase() === "administrador";
+  }
+
   logout() {
     this.clearSession();
+    this.router.navigate(["/login"]);
   }
 
   authHeaders(): HttpHeaders {
@@ -170,5 +189,6 @@ export class AuthService {
     return headers;
   }
 }
+
 
 

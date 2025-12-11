@@ -73,7 +73,8 @@ def create_app():
     from routes_productos import bp_prod
     from routes_solicitudes import bp_sol
     from routes_intercambios import bp_intercambios  # 👈 ya lo tenías
-    from routes_moderacion import bp_moderacion      # 👈 NUEVO
+    from routes_moderacion import bp_moderacion
+    from routes_admin import admin_bp      # 👈 NUEVO
 
     app.register_blueprint(bp_auth)
     app.register_blueprint(bp_upload)
@@ -81,7 +82,8 @@ def create_app():
     app.register_blueprint(bp_prod)
     app.register_blueprint(bp_sol)
     app.register_blueprint(bp_intercambios)
-    app.register_blueprint(bp_moderacion)  # 👈 NUEVO
+    app.register_blueprint(bp_moderacion)
+    app.register_blueprint(admin_bp)  # 👈 NUEVO
 
     @app.get("/api/health")
     def health():

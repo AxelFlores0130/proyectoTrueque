@@ -1,0 +1,165 @@
+.admin-container {
+  padding: 1rem 2rem;
+}
+
+.admin-container h1 {
+  margin-bottom: 1rem;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: 2fr 2fr;
+  grid-auto-rows: min-content;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.card {
+  background: #212121;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+.card h2 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+/* Tabla usuarios */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+th,
+td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid #444;
+}
+
+tr.seleccionado {
+  background: #333;
+}
+
+tr:hover {
+  background: #2a2a2a;
+  cursor: pointer;
+}
+
+button {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+span.on {
+  color: #00c853;
+  font-weight: bold;
+}
+
+span.off {
+  color: #ff5252;
+  font-weight: bold;
+}
+
+/* Historial */
+
+.historial {
+  grid-column: span 2;
+}
+
+.historial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.historial-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.hist-card {
+  background: #2b2b2b;
+  border-radius: 8px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.hist-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.hist-detalle h4 {
+  margin: 0.5rem 0 0.25rem;
+}
+
+.hist-detalle ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+/* Categorías */
+
+.form-categoria {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.form-categoria label {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 0.2rem;
+}
+
+.form-categoria input {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #555;
+  width: 180px;
+  background: #121212;
+  color: #eee;
+}
+
+.lista-categorias {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.lista-categorias li {
+  margin-bottom: 0.4rem;
+}
+
+/* Alerts */
+
+.alerts {
+  margin-bottom: 1rem;
+}
+
+.alert {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.alert.success {
+  background: #1b5e20;
+}
+
+.alert.error {
+  background: #b71c1c;
+}

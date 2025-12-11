@@ -1,0 +1,141 @@
+<div class="admin-container">
+  <h1>Panel de administración</h1>
+
+  <div class="alerts" *ngIf="mensaje || error">
+    <div class="alert success" *ngIf="mensaje">
+      {{ mensaje }}
+      <button (click)="cerrarAlertas()">×</button>
+    </div>
+    <div class="alert error" *ngIf="error">
+      {{ error }}
+      <button (click)="cerrarAlertas()">×</button>
+    </div>
+  </div>
+
+  <div class="admin-grid">
+
+    <!-- Usuarios -->
+    <section class="card">
+      <h2>Usuarios (clientes)</h2>
+
+      <p *ngIf="cargandoUsuarios">Cargando usuarios...</p>
+
+      <table *ngIf="!cargandoUsuarios && usuarios.length">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th>Registro</th>
+            <th>Verificado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let u of usuarios"
+            (click)="seleccionarUsuario(u)"
+            [class.seleccionado]="selectedUsuario?.id_usuario === u.id_usuario"
+          >
+            <td>{{ u.id_usuario }}</td>
+            <td>{{ u.nombre_completo }}</td>
+            <td>{{ u.correo }}</td>
+            <td>{{ u.telefono }}</td>
+            <td>{{ u.fecha_registro | date:'short' }}</td>
+            <td>
+              <span [ngClass]="{ on: u.verificado === 1, off: u.verificado === 0 }">
+                {{ u.verificado === 1 ? 'Activo' : 'Baja' }}
+              </span>
+            </td>
+            <td>
+              <button (click)="toggleVerificado(u, $event)">
+                {{ u.verificado === 1 ? 'Dar de baja' : 'Dar de alta' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p *ngIf="!cargandoUsuarios && !usuarios.length">
+        No hay usuarios registrados.
+      </p>
+    </section>
+
+    <!-- Historial -->
+    <section class="card historial" *ngIf="selectedUsuario">
+      <div class="historial-header">
+        <div>
+          <h2>Historial de intercambios</h2>
+          <span>Usuario: <strong>{{ selectedUsuario.nombre_completo }}</strong></span>
+        </div>
+        <button (click)="seleccionarUsuario(selectedUsuario)">Cerrar pestaña</button>
+      </div>
+
+      <p *ngIf="cargandoHistorial">Cargando historial...</p>
+
+      <div *ngIf="!cargandoHistorial && !historial.length">
+        Este usuario no tiene intercambios registrados.
+      </div>
+
+      <div class="historial-list" *ngIf="!cargandoHistorial && historial.length">
+        <div class="hist-card" *ngFor="let h of historial">
+          <div class="hist-main">
+            <div>
+              <strong>ID intercambio:</strong> {{ h.id_intercambio }} <br />
+              <strong>Estado actual:</strong> {{ h.estado_actual }} <br />
+              <strong>Creado:</strong> {{ h.creado | date:'short' }}
+            </div>
+            <div>
+              <strong>Producto objetivo:</strong> {{ h.producto_objetivo || 'N/A' }} <br />
+              <strong>Producto ofrece:</strong> {{ h.producto_ofrece || 'N/A' }}
+            </div>
+          </div>
+
+          <div class="hist-detalle" *ngIf="h.historial.length">
+            <h4>Historial de cambios</h4>
+            <ul>
+              <li *ngFor="let item of h.historial">
+                <strong>{{ item.estado }}</strong> -
+                {{ item.fecha_cambio | date:'short' }}<br />
+                <small *ngIf="item.comentario">{{ item.comentario }}</small>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Categorías -->
+    <section class="card">
+      <h2>Gestión de categorías</h2>
+
+      <form class="form-categoria" (ngSubmit)="crearCategoria()">
+        <div>
+          <label>Nombre</label>
+          <input [(ngModel)]="nuevaCategoriaNombre" name="nombreCategoria" />
+        </div>
+        <div>
+          <label>Descripción</label>
+          <input [(ngModel)]="nuevaCategoriaDescripcion" name="descripcionCategoria" />
+        </div>
+        <button type="submit">Agregar categoría</button>
+      </form>
+
+      <p *ngIf="cargandoCategorias">Cargando categorías...</p>
+
+      <ul class="lista-categorias" *ngIf="!cargandoCategorias && categorias.length">
+        <li *ngFor="let c of categorias">
+          <strong>{{ c.id_categoria }} - {{ c.nombre }}</strong><br />
+          <small>{{ c.descripcion }}</small>
+        </li>
+      </ul>
+
+      <p *ngIf="!cargandoCategorias && !categorias.length">
+        No hay categorías registradas.
+      </p>
+    </section>
+
+  </div>
+</div>
+
