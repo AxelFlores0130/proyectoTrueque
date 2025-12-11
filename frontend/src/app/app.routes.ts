@@ -17,6 +17,9 @@ import { SolicitudesComponent } from './solicitudes/solicitudes.component';
 import { IntercambiosEnProcesoComponent } from './pages/intercambios/intercambios-en-proceso.component';
 import { IntercambioChatComponent } from './pages/intercambios/intercambio-chat.component';
 
+// 👇 NUEVO: historial de intercambios
+import { HistorialIntercambiosComponent } from './pages/intercambios/historial-intercambios.component';
+
 export const routes: Routes = [
   { path: '', component: HomePage },
   { path: 'login', component: LoginPage },
@@ -25,7 +28,7 @@ export const routes: Routes = [
   { path: 'register', component: RegistroPage },
 
   // por compatibilidad: /registro también lleva a la misma pantalla
-  { path: 'registro', component:  RegistroPage },
+  { path: 'registro', component: RegistroPage },
 
   { path: 'publish', component: PublishPage },
   { path: 'exchanges', component: ExchangesPage },
@@ -35,10 +38,14 @@ export const routes: Routes = [
   // solicitudes
   { path: 'solicitudes', component: SolicitudesComponent },
 
-  // intercambios
+  // intercambios en proceso
   { path: 'intercambios', component: IntercambiosEnProcesoComponent },
   { path: 'intercambios/:id', component: IntercambioChatComponent },
+
+  // 👇 NUEVA RUTA: historial de intercambios finalizados
+  { path: 'historial-intercambios', component: HistorialIntercambiosComponent },
 ];
+
 
 
 

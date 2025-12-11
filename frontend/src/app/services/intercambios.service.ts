@@ -17,7 +17,7 @@ export interface IntercambioProductoRef {
   precio?: number | null;
 }
 
-// Lo que regresa /api/intercambios/en_proceso
+// Lo que regresa /api/intercambios/en_proceso y /api/intercambios/historial
 export interface IntercambioCard {
   id_intercambio: number;
   estado: string;
@@ -33,7 +33,7 @@ export interface IntercambioCard {
   producto_objetivo: IntercambioProductoRef;
 
   fecha_solicitud?: string | null;
-  // 👇 NUEVO: para el contador en la lista (si lo quieres usar ahí también)
+  // Para el contador / info extra si aplica
   fecha_limite_confirmacion?: string | null;
 }
 
@@ -80,6 +80,7 @@ export class IntercambiosService {
     return { headers: this.auth.authHeaders() };
   }
 
+  // Intercambios aún en proceso (pendiente / esperando confirmaciones)
   listarEnProceso(): Observable<IntercambioCard[]> {
     return this.http.get<IntercambioCard[]>(
       `${this.baseUrl}/en_proceso`,
@@ -87,6 +88,15 @@ export class IntercambiosService {
     );
   }
 
+  // 👇 NUEVO: historial de intercambios ya aceptados
+  listarHistorial(): Observable<IntercambioCard[]> {
+    return this.http.get<IntercambioCard[]>(
+      `${this.baseUrl}/historial`,
+      this.optsAuth()
+    );
+  }
+
+  // Detalle de un intercambio específico
   obtenerDetalle(id_intercambio: number): Observable<IntercambioDetalle> {
     return this.http.get<IntercambioDetalle>(
       `${this.baseUrl}/${id_intercambio}`,
@@ -117,6 +127,7 @@ export class IntercambiosService {
     );
   }
 }
+
 
 
 

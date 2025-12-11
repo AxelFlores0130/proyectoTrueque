@@ -1,0 +1,85 @@
+<div class="page-historial">
+  <h1>Historial de intercambios</h1>
+
+  <p class="subtitulo">
+    Aquí se muestran todos los intercambios que ya fueron finalizados. Este
+    historial es visible para ambos usuarios que participaron.
+  </p>
+
+  <div *ngIf="cargando" class="loading">
+    Cargando historial...
+  </div>
+
+  <div *ngIf="!cargando && intercambios.length === 0" class="empty">
+    Aún no tienes intercambios finalizados.
+  </div>
+
+  <div class="intercambios-lista" *ngIf="!cargando && intercambios.length > 0">
+    <div class="card" *ngFor="let i of intercambios">
+      <div class="card-main">
+        <!-- Columna producto que ofreciste -->
+        <div class="col-producto">
+          <h4 class="titulo-col">Tú ofreciste:</h4>
+
+          <img
+            *ngIf="i.producto_ofrece?.imagen"
+            class="producto-img"
+            [src]="resolverImagen(i.producto_ofrece?.imagen)"
+            alt="Producto que ofreciste"
+          />
+
+          <p class="producto-nombre">
+            {{ i.producto_ofrece?.titulo || "Solo diferencia en dinero" }}
+          </p>
+        </div>
+
+        <!-- Columna producto que recibiste -->
+        <div class="col-producto">
+          <h4 class="titulo-col">Tú recibiste:</h4>
+
+          <img
+            *ngIf="i.producto_objetivo?.imagen"
+            class="producto-img"
+            [src]="resolverImagen(i.producto_objetivo?.imagen)"
+            alt="Producto que recibiste"
+          />
+
+          <p class="producto-nombre">
+            {{ i.producto_objetivo?.titulo }}
+          </p>
+        </div>
+
+        <!-- Info del otro usuario y estado -->
+        <div class="col-info">
+          <div class="usuario-header">
+            <div class="usuario-nombre">
+              Con: {{ i.otro?.nombre }}
+            </div>
+            <div class="estado-tag">
+              {{ textoEstado(i) }}
+            </div>
+          </div>
+
+          <div
+            class="diferencia"
+            *ngIf="i.diferencia_monetaria && i.diferencia_monetaria !== '0.00'"
+          >
+            Diferencia pagada:
+            <strong>${{ i.diferencia_monetaria }}</strong>
+          </div>
+
+          <div class="fila-fecha" *ngIf="i.fecha_solicitud">
+            Intercambio creado el:
+            {{ i.fecha_solicitud | date: "short" }}
+          </div>
+
+          <div class="acciones">
+            <button class="btn btn-chat" (click)="verChat(i)">
+              Ver chat del intercambio
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -29,11 +29,26 @@ import { AuthService } from "./services/auth.service";
         <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
         <a routerLink="/productos" routerLinkActive="active">Productos</a>
         <a routerLink="/como" routerLinkActive="active">Cómo funciona</a>
-        <a *ngIf="auth.isAuth()" routerLink="/solicitudes" routerLinkActive="active">Solicitudes</a>
+
+        <!-- Zona de usuario autenticado -->
+        <a *ngIf="auth.isAuth()" routerLink="/solicitudes" routerLinkActive="active">
+          Solicitudes
+        </a>
+
+        <!-- 👇 NUEVO: historial al lado de solicitudes -->
+        <a *ngIf="auth.isAuth()" routerLink="/historial-intercambios" routerLinkActive="active">
+          Historial de intercambios
+        </a>
+
         <span class="spacer"></span>
+
+        <!-- Botones de login / registro -->
         <a *ngIf="!auth.isAuth()" routerLink="/login">Iniciar sesión</a>
         <a *ngIf="!auth.isAuth()" routerLink="/registro" class="cta">Crear cuenta</a>
-        <button *ngIf="auth.isAuth()" class="logout" (click)="logout()">Cerrar sesión</button>
+
+        <button *ngIf="auth.isAuth()" class="logout" (click)="logout()">
+          Cerrar sesión
+        </button>
       </nav>
     </header>
 
@@ -57,12 +72,12 @@ import { AuthService } from "./services/auth.service";
 export class AppComponent {
   auth = inject(AuthService);
   private router = inject(Router);
+
   logout(){
-    // Confirmación antes de cerrar sesión
     const ok = window.confirm("¿Estás seguro que deseas cerrar sesión?");
     if(!ok) return;
     this.auth.logout();
-
     this.router.navigateByUrl("/");
   }
 }
+
