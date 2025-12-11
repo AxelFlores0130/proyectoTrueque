@@ -1,21 +1,26 @@
 ﻿import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms"; // 👈 para [(ngModel)] en la reoferta
+import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
+
 import {
   SolicitudesService,
   SolicitudCard,
-} from "../services/solicitudes.service";
+} from "../services/solicitudes.service"; // 👈 desde app/solicitudes -> app/services
+import { environment } from "../../environments/environment"; // 👈 desde app/solicitudes -> environments
 
 @Component({
   selector: "app-solicitudes",
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule], // 👈 añadimos FormsModule
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: "./solicitudes.component.html",
   styleUrls: ["./solicitudes.component.css"],
 })
 export class SolicitudesComponent implements OnInit {
   loading = false;
+
+  // base del backend (para armar URL completas de imágenes)
+  private API = environment.apiUrl; // 👈
 
   // pestaña actual
   tab: "recibidas" | "enviadas" = "recibidas";
@@ -30,7 +35,7 @@ export class SolicitudesComponent implements OnInit {
   enviadasRechazadas: SolicitudCard[] = [];
   enviadasCanceladas: SolicitudCard[] = [];
 
-  // 🔹 NUEVO: para reofertar sobre la MISMA solicitud
+  // reoferta sobre la misma solicitud
   reOfertaAbiertaId: number | null = null;
   nuevaDiferencia: number | null = null;
 
@@ -91,11 +96,9 @@ export class SolicitudesComponent implements OnInit {
 
     this.solicitudesService.aceptar(s.id_solicitud).subscribe({
       next: () => {
-        // ya no aparece en recibidas porque deja de ser pendiente
         this.recibidasPendientes = this.recibidasPendientes.filter(
           (sol) => sol.id_solicitud !== s.id_solicitud
         );
-        // recargamos enviadas para que al solicitante le salga como ACEPTADA
         this.cargarSolicitudes();
       },
       error: (err) => {
@@ -109,11 +112,9 @@ export class SolicitudesComponent implements OnInit {
 
     this.solicitudesService.rechazar(s.id_solicitud).subscribe({
       next: () => {
-        // desaparece de Recibidas
         this.recibidasPendientes = this.recibidasPendientes.filter(
           (sol) => sol.id_solicitud !== s.id_solicitud
         );
-        // del lado del que la envió, ya se verá como RECHAZADA
         this.cargarSolicitudes();
       },
       error: (err) => {
@@ -137,7 +138,7 @@ export class SolicitudesComponent implements OnInit {
     });
   }
 
-  // 🔹 REOFERTA SOBRE LA MISMA FILA (no crea nueva)
+  // REOFERTA SOBRE LA MISMA FILA
 
   abrirReoferta(s: SolicitudCard): void {
     this.reOfertaAbiertaId = s.id_solicitud;
@@ -156,8 +157,6 @@ export class SolicitudesComponent implements OnInit {
     }
 
     const payload = {
-      // de momento mantenemos el mismo producto_ofrece,
-      // más adelante podemos dejar escoger otro
       id_producto_ofrece: s.producto_ofrece
         ? s.producto_ofrece.id_producto
         : undefined,
@@ -169,7 +168,7 @@ export class SolicitudesComponent implements OnInit {
       next: () => {
         alert("Solicitud actualizada y reenviada.");
         this.cerrarReoferta();
-        this.cargarSolicitudes(); // vuelve a salir como pendiente en ambos lados
+        this.cargarSolicitudes();
       },
       error: (err) => {
         console.error("Error al reofertar solicitud", err);
@@ -209,5 +208,26 @@ export class SolicitudesComponent implements OnInit {
         return "badge";
     }
   }
+
+  // ------- resolver imágenes (igual que en Productos) -------
+
+  resolverImagen(url: string | null): string {
+    if (!url) {
+      return "assets/img/placeholder-producto.png";
+    }
+
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+
+    const baseBackend = this.API.replace("/api", "");
+
+    if (!url.startsWith("/")) {
+      url = "/" + url;
+    }
+
+    return baseBackend + url;
+  }
 }
+
 
