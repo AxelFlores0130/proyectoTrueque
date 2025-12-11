@@ -25,7 +25,11 @@
       <button class="btn btn-cancelar" (click)="cancelar()">
         Cancelar este intercambio
       </button>
-      <button class="btn btn-confirmar" (click)="finalizar()">
+      <button
+        class="btn btn-confirmar"
+        (click)="finalizar()"
+        [disabled]="yaConfirmeYo || estadoIntercambio === 'aceptado' || estadoIntercambio === 'cancelado'"
+      >
         Confirmar que ya recibí el producto
       </button>
     </div>
@@ -116,5 +120,58 @@
     </button>
   </div>
 </div>
+
+<!-- OVERLAY: esperando confirmación del otro -->
+<div class="overlay" *ngIf="mostrandoEsperando">
+  <div class="overlay-card">
+    <h2>¡Gracias por usar Trueque! 🎉</h2>
+    <p>Ya marcaste este intercambio como realizado.</p>
+    <p>Ahora estamos esperando a que la otra persona confirme también.</p>
+
+    <div class="overlay-timer" *ngIf="deadline">
+      <p>
+        El otro usuario tiene
+        <strong>{{ contador }}</strong>
+        para confirmar.
+      </p>
+      <small>
+        Si no confirma a tiempo, su cuenta será dada de baja automáticamente.
+      </small>
+    </div>
+
+    <button class="btn-ir" (click)="irATienda()">
+      Seguir explorando productos
+    </button>
+  </div>
+</div>
+
+<!-- OVERLAY: intercambio completado -->
+<div class="overlay" *ngIf="mostrandoExito">
+  <div class="overlay-card success">
+    <h2>Intercambio completado ✅</h2>
+    <p>Ambos han confirmado que el intercambio se realizó correctamente.</p>
+    <p>¡Gracias por confiar en Trueque! Sigue explorando nuevos productos.</p>
+
+    <button class="btn-ir" (click)="irATienda()">
+      Ir a la tienda
+    </button>
+  </div>
+</div>
+
+<!-- OVERLAY: intercambio cancelado -->
+<div class="overlay" *ngIf="mostrandoCancelado">
+  <div class="overlay-card warning">
+    <h2>Intercambio cancelado</h2>
+    <p>
+      Este intercambio ha sido cancelado. Puedes seguir explorando otros
+      productos y crear nuevos intercambios.
+    </p>
+
+    <button class="btn-ir" (click)="irATienda()">
+      Volver a la tienda
+    </button>
+  </div>
+</div>
+
 
 

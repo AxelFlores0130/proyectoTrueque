@@ -148,3 +148,37 @@
   }
 }
 
+.estado-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Estados visuales */
+.estado-en-proceso {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.estado-esperando-otro {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.estado-falta-tu-confirmacion {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.estado-completado {
+  background: #ecfdf5;
+  color: #16a34a;
+}
+
+.estado-cancelado {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+

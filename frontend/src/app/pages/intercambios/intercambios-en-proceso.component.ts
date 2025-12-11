@@ -5,7 +5,7 @@ import {
   IntercambiosService,
   IntercambioCard,
 } from "../../services/intercambios.service";
-import { environment } from "../../../environments/environment";  // 👈 NUEVO
+import { environment } from "../../../environments/environment";
 
 @Component({
   selector: "app-intercambios-en-proceso",
@@ -52,7 +52,63 @@ export class IntercambiosEnProcesoComponent implements OnInit {
     });
   }
 
-  // 👇 Igual que en productos / solicitudes
+  // Texto bonito del estado, usando los flags de cada lado
+  textoEstado(i: IntercambioCard): string {
+    if (i.estado === "cancelado") {
+      return "Cancelado";
+    }
+
+    const yoConfirme = i.soy_ofertante
+      ? i.estado_solicitante === "aceptado"
+      : i.estado_receptor === "aceptado";
+
+    const otroConfirme = i.soy_ofertante
+      ? i.estado_receptor === "aceptado"
+      : i.estado_solicitante === "aceptado";
+
+    if (i.estado === "aceptado" && yoConfirme && otroConfirme) {
+      return "Intercambio completado";
+    }
+
+    if (yoConfirme && !otroConfirme) {
+      return "Ya confirmaste, esperando al otro usuario";
+    }
+
+    if (!yoConfirme && otroConfirme) {
+      return "El otro usuario ya confirmó, falta tu confirmación";
+    }
+
+    return "En proceso";
+  }
+
+  // Para aplicar estilos distintos al estado
+  claseEstado(i: IntercambioCard): string {
+    if (i.estado === "cancelado") return "estado-cancelado";
+
+    const yoConfirme = i.soy_ofertante
+      ? i.estado_solicitante === "aceptado"
+      : i.estado_receptor === "aceptado";
+
+    const otroConfirme = i.soy_ofertante
+      ? i.estado_receptor === "aceptado"
+      : i.estado_solicitante === "aceptado";
+
+    if (i.estado === "aceptado" && yoConfirme && otroConfirme) {
+      return "estado-completado";
+    }
+
+    if (yoConfirme && !otroConfirme) {
+      return "estado-esperando-otro";
+    }
+
+    if (!yoConfirme && otroConfirme) {
+      return "estado-falta-tu-confirmacion";
+    }
+
+    return "estado-en-proceso";
+  }
+
+  // Igual que en productos / solicitudes
   resolverImagen(url: string | null | undefined): string {
     if (!url) {
       return "assets/img/placeholder-producto.png";
@@ -71,4 +127,5 @@ export class IntercambiosEnProcesoComponent implements OnInit {
     return baseBackend + url;
   }
 }
+
 

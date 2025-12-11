@@ -2,9 +2,12 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from models import db, Intercambio, IntercambioMensaje, Producto, Usuario
+
+# 👇 importa tu instancia de socketio (ajusta si tu app se llama distinto)
+from app import socketio
 
 bp_intercambios = Blueprint("intercambios", __name__, url_prefix="/api/intercambios")
 
@@ -13,7 +16,6 @@ def usuario_to_dict(u: Usuario):
     if not u:
         return None
 
-    # Intenta varios posibles nombres de campo
     nombre = (
         getattr(u, "nombre", None)
         or getattr(u, "nombre_completo", None)
@@ -34,9 +36,33 @@ def producto_to_card(p: Producto):
     return {
         "id_producto": p.id_producto,
         "titulo": p.titulo,
-        # 👇 usar el campo real de tu modelo (imagen_url)
         "imagen": getattr(p, "imagen_url", None),
-        "precio": float(p.precio) if getattr(p, "precio", None) is not None else None,
+        "precio": float(p.valor_estimado) if getattr(p, "valor_estimado", None) is not None else None,
+    }
+
+
+def _serializar_intercambio(i: Intercambio, id_usuario_actual: int):
+    usuario_ofrece = Usuario.query.get(i.id_usuario_ofrece)
+    usuario_recibe = Usuario.query.get(i.id_usuario_recibe)
+    prod_ofrece = Producto.query.get(i.id_producto_ofrecido) if i.id_producto_ofrecido else None
+    prod_solicita = Producto.query.get(i.id_producto_solicitado)
+
+    soy_ofertante = (i.id_usuario_ofrece == id_usuario_actual)
+
+    return {
+        "id_intercambio": i.id_intercambio,
+        "estado": i.estado,
+        "estado_solicitante": i.estado_solicitante,
+        "estado_receptor": i.estado_receptor,
+        "diferencia_monetaria": str(i.diferencia_monetaria),
+        "yo_soy_ofertante": soy_ofertante,
+        "usuario_ofrece": usuario_to_dict(usuario_ofrece),
+        "usuario_recibe": usuario_to_dict(usuario_recibe),
+        "producto_ofrece": producto_to_card(prod_ofrece),
+        "producto_objetivo": producto_to_card(prod_solicita),
+        "fecha_limite_confirmacion": (
+            i.fecha_limite_confirmacion.isoformat() if i.fecha_limite_confirmacion else None
+        ),
     }
 
 
@@ -46,7 +72,6 @@ def producto_to_card(p: Producto):
 @bp_intercambios.route("/en_proceso", methods=["GET"])
 @jwt_required()
 def listar_en_proceso():
-    # ⚠️ convertir el identity a int
     raw = get_jwt_identity()
     try:
         id_usuario_actual = int(raw)
@@ -91,6 +116,9 @@ def listar_en_proceso():
             "producto_ofrece": producto_to_card(prod_ofrece),
             "producto_objetivo": producto_to_card(prod_solicita),
             "fecha_solicitud": i.fecha_solicitud.isoformat() if i.fecha_solicitud else None,
+            "fecha_limite_confirmacion": (
+                i.fecha_limite_confirmacion.isoformat() if i.fecha_limite_confirmacion else None
+            ),
         })
 
     return jsonify(resultado), 200
@@ -113,23 +141,38 @@ def obtener_intercambio(id_intercambio):
     if id_usuario_actual not in (i.id_usuario_ofrece, i.id_usuario_recibe):
         return jsonify({"msg": "No participas en este intercambio"}), 403
 
-    usuario_ofrece = Usuario.query.get(i.id_usuario_ofrece)
-    usuario_recibe = Usuario.query.get(i.id_usuario_recibe)
-    prod_ofrece = Producto.query.get(i.id_producto_ofrecido) if i.id_producto_ofrecido else None
-    prod_solicita = Producto.query.get(i.id_producto_solicitado)
+    # 👇 penalización si ya se pasó el tiempo y solo uno confirmó
+    ahora = datetime.utcnow()
+    if (
+        i.fecha_limite_confirmacion
+        and i.fecha_limite_confirmacion < ahora
+        and i.estado == "pendiente"
+    ):
+        sol_acepto = (i.estado_solicitante == "aceptado")
+        rec_acepto = (i.estado_receptor == "aceptado")
 
-    return jsonify({
-        "id_intercambio": i.id_intercambio,
-        "estado": i.estado,
-        "estado_solicitante": i.estado_solicitante,
-        "estado_receptor": i.estado_receptor,
-        "diferencia_monetaria": str(i.diferencia_monetaria),
-        "yo_soy_ofertante": (i.id_usuario_ofrece == id_usuario_actual),
-        "usuario_ofrece": usuario_to_dict(usuario_ofrece),
-        "usuario_recibe": usuario_to_dict(usuario_recibe),
-        "producto_ofrece": producto_to_card(prod_ofrece),
-        "producto_objetivo": producto_to_card(prod_solicita),
-    }), 200
+        # XOR: exactamente uno aceptó
+        if sol_acepto ^ rec_acepto:
+            if sol_acepto:
+                id_no_confirmo = i.id_usuario_recibe
+            else:
+                id_no_confirmo = i.id_usuario_ofrece
+
+            usuario = Usuario.query.get(id_no_confirmo)
+            if usuario and usuario.verificado:
+                usuario.verificado = False  # verificado = 0
+                i.estado = "cancelado"
+                i.fecha_limite_confirmacion = None
+                db.session.commit()
+
+                room = f"intercambio_{i.id_intercambio}"
+                socketio.emit("intercambio_penalizado", {
+                    "id_intercambio": i.id_intercambio,
+                    "id_usuario_penalizado": id_no_confirmo
+                }, room=room)
+
+    data = _serializar_intercambio(i, id_usuario_actual)
+    return jsonify(data), 200
 
 
 # --------------------------------------------------------
@@ -199,18 +242,37 @@ def cancelar_intercambio(id_intercambio):
 
     intercambio.estado = "cancelado"
     intercambio.fecha_actualizacion = datetime.utcnow()
+    intercambio.fecha_limite_confirmacion = None
 
     db.session.commit()
 
-    return jsonify({"msg": "Intercambio cancelado"}), 200
+    room = f"intercambio_{intercambio.id_intercambio}"
+    socketio.emit("intercambio_cancelado", {
+        "id_intercambio": intercambio.id_intercambio,
+        "estado": intercambio.estado
+    }, room=room)
+
+    return jsonify({"msg": "Intercambio cancelado", "estado": intercambio.estado}), 200
 
 
 # --------------------------------------------------------
-# FINALIZAR INTERCAMBIO
+# FINALIZAR / CONFIRMAR INTERCAMBIO
 # --------------------------------------------------------
 @bp_intercambios.route("/<int:id_intercambio>/finalizar", methods=["PUT"])
 @jwt_required()
 def finalizar_intercambio(id_intercambio):
+    """
+    - Primer usuario que confirma:
+        * su estado_* pasa a "aceptado"
+        * estado general sigue "pendiente"
+        * fecha_limite_confirmacion = ahora + 15 min (si no existe)
+        * emite evento 'intercambio_confirmado_parcial'
+    - Segundo usuario que confirma:
+        * su estado_* pasa a "aceptado"
+        * si ambos "aceptado" → estado = "aceptado"
+        * fecha_limite_confirmacion = NULL
+        * emite evento 'intercambio_confirmado_total'
+    """
     raw = get_jwt_identity()
     try:
         id_usuario_actual = int(raw)
@@ -225,17 +287,40 @@ def finalizar_intercambio(id_intercambio):
     if intercambio.estado == "cancelado":
         return jsonify({"msg": "El intercambio está cancelado"}), 400
 
+    ahora = datetime.utcnow()
+
+    # marcar confirmación según quién es
     if id_usuario_actual == intercambio.id_usuario_ofrece:
         intercambio.estado_solicitante = "aceptado"
     else:
         intercambio.estado_receptor = "aceptado"
 
-    if intercambio.estado_solicitante == "aceptado" and intercambio.estado_receptor == "aceptado":
+    # comprobar si ambos aceptaron
+    if (
+        intercambio.estado_solicitante == "aceptado"
+        and intercambio.estado_receptor == "aceptado"
+    ):
         intercambio.estado = "aceptado"
+        intercambio.fecha_limite_confirmacion = None
+        evento = "intercambio_confirmado_total"
+    else:
+        # solo uno ha confirmado
+        if not intercambio.fecha_limite_confirmacion:
+            intercambio.fecha_limite_confirmacion = ahora + timedelta(minutes=15)
+        # mantenemos estado "pendiente"
+        evento = "intercambio_confirmado_parcial"
 
-    intercambio.fecha_actualizacion = datetime.utcnow()
+    intercambio.fecha_actualizacion = ahora
     db.session.commit()
 
-    return jsonify({"msg": "Estado actualizado", "estado": intercambio.estado}), 200
+    data = _serializar_intercambio(intercambio, id_usuario_actual)
+
+    room = f"intercambio_{intercambio.id_intercambio}"
+    socketio.emit(evento, data, room=room)
+
+    return jsonify({"msg": "Estado actualizado", **data}), 200
+
+
+
 
 

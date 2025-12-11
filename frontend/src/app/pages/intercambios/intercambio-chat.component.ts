@@ -10,7 +10,7 @@ import {
 import { ChatService } from "../../services/chat.service";
 import { AuthService } from "../../services/auth.service";
 import { Subscription } from "rxjs";
-import { environment } from "../../../environments/environment";  // 👈 OJO: 3 puntos
+import { environment } from "../../../environments/environment";
 
 @Component({
   selector: "app-intercambio-chat",
@@ -21,10 +21,27 @@ import { environment } from "../../../environments/environment";  // 👈 OJO: 3
 })
 export class IntercambioChatComponent implements OnInit, OnDestroy {
   id_intercambio!: number;
-  intercambio?: IntercambioDetalle;
+  // puedo recibir campos extra del backend sin problema
+  intercambio?: IntercambioDetalle | any;
   mensajes: MensajeIntercambio[] = [];
   nuevoMensaje = "";
   idUsuarioActual!: number;
+
+  // estado del flujo de confirmación
+  estadoIntercambio: "pendiente" | "aceptado" | "cancelado" | string = "pendiente";
+  yaConfirmeYo = false;
+  confirmoOtro = false;
+
+  // overlays
+  mostrandoEsperando = false;
+  mostrandoExito = false;
+  mostrandoCancelado = false;
+  // (si más adelante usas penalización por socket, aquí añades otra bandera)
+
+  // contador
+  deadline: Date | null = null;
+  contador = "15:00";
+  private contadorIntervalId: any = null;
 
   private subMensajes?: Subscription;
 
@@ -54,17 +71,71 @@ export class IntercambioChatComponent implements OnInit, OnDestroy {
         setTimeout(() => this.scrollAbajo(), 50);
       }
     });
+
+    // opcional: cada cierto tiempo refrescamos el estado por si cambió en el otro usuario
+    setInterval(() => {
+      this.cargarIntercambio(true);
+    }, 10000); // cada 10 segundos
   }
 
   ngOnDestroy(): void {
     this.chatService.salirIntercambio(this.id_intercambio);
     this.subMensajes?.unsubscribe();
+    this.detenerContador();
   }
 
-  cargarIntercambio(): void {
+  cargarIntercambio(silencioso = false): void {
     this.intercambiosService.obtenerDetalle(this.id_intercambio).subscribe({
-      next: (res) => (this.intercambio = res),
+      next: (res) => {
+        this.intercambio = res;
+        this.actualizarEstadoDesdeDetalle(res as any);
+        if (!silencioso) {
+          setTimeout(() => this.scrollAbajo(), 100);
+        }
+      },
     });
+  }
+
+  private actualizarEstadoDesdeDetalle(detalle: any): void {
+    if (!detalle) return;
+
+    this.estadoIntercambio = detalle.estado || "pendiente";
+
+    const soyOfertante = !!detalle.yo_soy_ofertante;
+    const miEstado = soyOfertante ? detalle.estado_solicitante : detalle.estado_receptor;
+    const otroEstado = soyOfertante ? detalle.estado_receptor : detalle.estado_solicitante;
+
+    this.yaConfirmeYo = miEstado === "aceptado";
+    this.confirmoOtro = otroEstado === "aceptado";
+
+    // limpiar overlays
+    this.mostrandoEsperando = false;
+    this.mostrandoExito = false;
+    this.mostrandoCancelado = false;
+
+    if (this.estadoIntercambio === "cancelado") {
+      // alguien canceló → mostrar aviso y luego redirigir
+      this.mostrandoCancelado = true;
+      return;
+    }
+
+    if (this.estadoIntercambio === "aceptado" && this.yaConfirmeYo && this.confirmoOtro) {
+      // ambos confirmaron → éxito total
+      this.mostrandoExito = true;
+      this.detenerContador();
+    } else if (this.yaConfirmeYo && !this.confirmoOtro) {
+      // yo ya confirmé, el otro no → pantalla de espera
+      this.mostrandoEsperando = true;
+    }
+
+    // manejar fecha límite para el contador
+    if (detalle.fecha_limite_confirmacion) {
+      this.deadline = new Date(detalle.fecha_limite_confirmacion);
+      this.iniciarContador();
+    } else {
+      this.deadline = null;
+      this.detenerContador();
+    }
   }
 
   cargarMensajes(): void {
@@ -108,8 +179,9 @@ export class IntercambioChatComponent implements OnInit, OnDestroy {
     if (!confirm("¿Seguro que quieres cancelar este intercambio?")) return;
     this.intercambiosService.cancelar(this.id_intercambio).subscribe({
       next: () => {
-        alert("Intercambio cancelado");
-        this.router.navigate(["/intercambios"]);
+        // mostramos overlay de cancelado y luego redirigimos
+        this.mostrandoCancelado = true;
+        setTimeout(() => this.router.navigate(["/intercambios"]), 1500);
       },
     });
   }
@@ -117,13 +189,16 @@ export class IntercambioChatComponent implements OnInit, OnDestroy {
   finalizar(): void {
     if (!confirm("¿Confirmas que el intercambio se realizó correctamente?")) return;
     this.intercambiosService.finalizar(this.id_intercambio).subscribe({
-      next: () => {
-        alert(
-          "Tu estado fue actualizado. Cuando ambos confirmen, el intercambio se dará por finalizado."
-        );
-        this.cargarIntercambio();
+      next: (data: any) => {
+        // el backend ya nos regresa el detalle actualizado
+        this.intercambio = data;
+        this.actualizarEstadoDesdeDetalle(data);
       },
     });
+  }
+
+  irATienda(): void {
+    this.router.navigate(["/"]);
   }
 
   scrollAbajo(): void {
@@ -159,6 +234,43 @@ export class IntercambioChatComponent implements OnInit, OnDestroy {
 
     return baseBackend + url;
   }
+
+  // --------- CONTADOR 15 MIN ---------
+  private iniciarContador(): void {
+    if (!this.deadline) return;
+    this.detenerContador();
+    this.actualizarContador();
+    this.contadorIntervalId = setInterval(() => this.actualizarContador(), 1000);
+  }
+
+  private detenerContador(): void {
+    if (this.contadorIntervalId) {
+      clearInterval(this.contadorIntervalId);
+      this.contadorIntervalId = null;
+    }
+  }
+
+  private actualizarContador(): void {
+    if (!this.deadline) return;
+
+    const ahora = Date.now();
+    const fin = this.deadline.getTime();
+    const diff = fin - ahora;
+
+    if (diff <= 0) {
+      this.contador = "00:00";
+      this.detenerContador();
+      return;
+    }
+
+    const totalSeg = Math.floor(diff / 1000);
+    const min = Math.floor(totalSeg / 60);
+    const seg = totalSeg % 60;
+    const mm = min.toString().padStart(2, "0");
+    const ss = seg.toString().padStart(2, "0");
+    this.contador = `${mm}:${ss}`;
+  }
 }
+
 
 

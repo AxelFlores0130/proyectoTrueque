@@ -153,6 +153,7 @@ class Intercambio(db.Model):
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
     )
+    fecha_limite_confirmacion = db.Column(db.DateTime, nullable=True)
 
 class IntercambioMensaje(db.Model):
     __tablename__ = "intercambio_mensajes"

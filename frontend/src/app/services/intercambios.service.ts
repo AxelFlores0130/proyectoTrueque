@@ -2,8 +2,22 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { AuthService } from "./auth.service";
-import { environment } from "../../environments/environment";  // 👈 NUEVO
+import { environment } from "../../environments/environment";
 
+export interface IntercambioUserRef {
+  id_usuario: number;
+  nombre: string;
+  avatar_url?: string | null;
+}
+
+export interface IntercambioProductoRef {
+  id_producto: number;
+  titulo: string;
+  imagen?: string | null;
+  precio?: number | null;
+}
+
+// Lo que regresa /api/intercambios/en_proceso
 export interface IntercambioCard {
   id_intercambio: number;
   estado: string;
@@ -11,27 +25,35 @@ export interface IntercambioCard {
   estado_receptor: string;
   diferencia_monetaria: string;
   soy_ofertante: boolean;
-  yo: { id_usuario: number; nombre: string; avatar_url?: string | null };
-  otro: { id_usuario: number; nombre: string; avatar_url?: string | null };
-  producto_ofrece?: {
-    id_producto: number;
-    titulo: string;
-    imagen?: string | null;      // 👈 aquí luego usaremos resolverImagen(...)
-    precio?: number | null;
-  } | null;
-  producto_objetivo: {
-    id_producto: number;
-    titulo: string;
-    imagen?: string | null;
-    precio?: number | null;
-  };
+
+  yo: IntercambioUserRef;
+  otro: IntercambioUserRef;
+
+  producto_ofrece?: IntercambioProductoRef | null;
+  producto_objetivo: IntercambioProductoRef;
+
   fecha_solicitud?: string | null;
+  // 👇 NUEVO: para el contador en la lista (si lo quieres usar ahí también)
+  fecha_limite_confirmacion?: string | null;
 }
 
-export interface IntercambioDetalle extends IntercambioCard {
-  usuario_ofrece: IntercambioCard["yo"];
-  usuario_recibe: IntercambioCard["yo"];
+// Lo que regresa /api/intercambios/:id
+export interface IntercambioDetalle {
+  id_intercambio: number;
+  estado: string;
+  estado_solicitante: string;
+  estado_receptor: string;
+  diferencia_monetaria: string;
+
   yo_soy_ofertante: boolean;
+
+  usuario_ofrece: IntercambioUserRef;
+  usuario_recibe: IntercambioUserRef;
+
+  producto_ofrece?: IntercambioProductoRef | null;
+  producto_objetivo: IntercambioProductoRef;
+
+  fecha_limite_confirmacion?: string | null;
 }
 
 export interface MensajeIntercambio {
@@ -47,10 +69,6 @@ export interface MensajeIntercambio {
 
 @Injectable({ providedIn: "root" })
 export class IntercambiosService {
-  // ❌ ANTES:
-  // private baseUrl = "http://127.0.0.1:5000/api/intercambios";
-
-  // ✅ AHORA: usar la misma base del backend que en el resto
   private baseUrl = `${environment.apiUrl}/intercambios`;
 
   constructor(
@@ -58,17 +76,21 @@ export class IntercambiosService {
     private auth: AuthService
   ) {}
 
+  private optsAuth() {
+    return { headers: this.auth.authHeaders() };
+  }
+
   listarEnProceso(): Observable<IntercambioCard[]> {
     return this.http.get<IntercambioCard[]>(
       `${this.baseUrl}/en_proceso`,
-      { headers: this.auth.authHeaders() }
+      this.optsAuth()
     );
   }
 
   obtenerDetalle(id_intercambio: number): Observable<IntercambioDetalle> {
     return this.http.get<IntercambioDetalle>(
       `${this.baseUrl}/${id_intercambio}`,
-      { headers: this.auth.authHeaders() }
+      this.optsAuth()
     );
   }
 
@@ -76,24 +98,25 @@ export class IntercambiosService {
     return this.http.put(
       `${this.baseUrl}/${id_intercambio}/cancelar`,
       {},
-      { headers: this.auth.authHeaders() }
+      this.optsAuth()
     );
   }
 
-  finalizar(id_intercambio: number): Observable<any> {
-    return this.http.put(
+  finalizar(id_intercambio: number): Observable<IntercambioDetalle & { msg: string }> {
+    return this.http.put<IntercambioDetalle & { msg: string }>(
       `${this.baseUrl}/${id_intercambio}/finalizar`,
       {},
-      { headers: this.auth.authHeaders() }
+      this.optsAuth()
     );
   }
 
   listarMensajes(id_intercambio: number): Observable<MensajeIntercambio[]> {
     return this.http.get<MensajeIntercambio[]>(
       `${this.baseUrl}/${id_intercambio}/mensajes`,
-      { headers: this.auth.authHeaders() }
+      this.optsAuth()
     );
   }
 }
+
 
 
