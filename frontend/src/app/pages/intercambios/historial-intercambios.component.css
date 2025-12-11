@@ -113,6 +113,11 @@
   color: #0f172a;
 }
 
+.fila-fecha {
+  color: #64748b;
+  font-size: 12px;
+}
+
 .acciones {
   margin-top: 8px;
 }
@@ -126,3 +131,4 @@
   background: #0ea5e9;
   color: #ffffff;
 }
+

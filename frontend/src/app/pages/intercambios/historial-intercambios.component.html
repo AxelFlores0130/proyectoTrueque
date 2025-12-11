@@ -1,13 +1,13 @@
 <div class="page-historial">
-  <h1>Historial de intercambios</h1>
+  <h1>📦 Historial de intercambios</h1>
 
   <p class="subtitulo">
-    Aquí se muestran todos los intercambios que ya fueron finalizados. Este
-    historial es visible para ambos usuarios que participaron.
+    Aquí se muestran todos los intercambios que ya fueron <strong>finalizados</strong>.
+    Este historial es visible para ambos usuarios que participaron.
   </p>
 
   <div *ngIf="cargando" class="loading">
-    Cargando historial...
+    Cargando historial de intercambios...
   </div>
 
   <div *ngIf="!cargando && intercambios.length === 0" class="empty">
@@ -17,15 +17,15 @@
   <div class="intercambios-lista" *ngIf="!cargando && intercambios.length > 0">
     <div class="card" *ngFor="let i of intercambios">
       <div class="card-main">
-        <!-- Columna producto que ofreciste -->
+        <!-- Columna: lo que ofreciste -->
         <div class="col-producto">
-          <h4 class="titulo-col">Tú ofreciste:</h4>
+          <h4 class="titulo-col">Tú ofreciste</h4>
 
           <img
             *ngIf="i.producto_ofrece?.imagen"
             class="producto-img"
             [src]="resolverImagen(i.producto_ofrece?.imagen)"
-            alt="Producto que ofreciste"
+            alt="Producto ofrecido"
           />
 
           <p class="producto-nombre">
@@ -33,15 +33,15 @@
           </p>
         </div>
 
-        <!-- Columna producto que recibiste -->
+        <!-- Columna: lo que recibiste -->
         <div class="col-producto">
-          <h4 class="titulo-col">Tú recibiste:</h4>
+          <h4 class="titulo-col">Tú recibiste</h4>
 
           <img
             *ngIf="i.producto_objetivo?.imagen"
             class="producto-img"
             [src]="resolverImagen(i.producto_objetivo?.imagen)"
-            alt="Producto que recibiste"
+            alt="Producto recibido"
           />
 
           <p class="producto-nombre">
@@ -64,8 +64,7 @@
             class="diferencia"
             *ngIf="i.diferencia_monetaria && i.diferencia_monetaria !== '0.00'"
           >
-            Diferencia pagada:
-            <strong>${{ i.diferencia_monetaria }}</strong>
+            Diferencia pagada: <strong>${{ i.diferencia_monetaria }}</strong>
           </div>
 
           <div class="fila-fecha" *ngIf="i.fecha_solicitud">
@@ -83,3 +82,4 @@
     </div>
   </div>
 </div>
+
