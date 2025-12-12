@@ -40,6 +40,9 @@ export class ProductosComponent implements OnInit {
   busqueda = '';
   categoriaSeleccionada: number | null = null;
 
+  // ⭐ NUEVO: vista actual (explorar / mis productos)
+  vistaActual: 'explorar' | 'mios' = 'explorar';
+
   categorias: { id_categoria: number; nombre: string }[] = [
     { id_categoria: 1, nombre: 'Electrónicos' },
     { id_categoria: 2, nombre: 'Celulares' },
@@ -123,6 +126,11 @@ export class ProductosComponent implements OnInit {
   // ------------------------------------------------
   ngOnInit(): void {
     this.cargarProductos();
+  }
+
+  // ⭐ NUEVO: cambiar pestaña
+  setVista(vista: 'explorar' | 'mios') {
+    this.vistaActual = vista;
   }
 
   // ------------------------------------------------
@@ -441,24 +449,23 @@ export class ProductosComponent implements OnInit {
       this.motivoRechazoIA = '';
 
       this.productosService
-  .validarImagenProducto(file, this.form.titulo, this.form.descripcion)
-  .subscribe({
+        .validarImagenProducto(file, this.form.titulo, this.form.descripcion)
+        .subscribe({
+          next: (res: ModeracionImagenResponse) => {
+            this.analizandoImagenIA = false;
+            this.imagenValidaIA = res.allowed;
+            this.motivoRechazoIA = res.reason || '';
 
-        next: (res: ModeracionImagenResponse) => {
-          this.analizandoImagenIA = false;
-          this.imagenValidaIA = res.allowed;
-          this.motivoRechazoIA = res.reason || '';
-
-          console.log('Resultado moderación IA:', res);
-        },
-        error: (err) => {
-          console.error('Error al analizar imagen con IA', err);
-          this.analizandoImagenIA = false;
-          this.imagenValidaIA = null;
-          this.motivoRechazoIA =
-            'No se pudo analizar la imagen. Intenta de nuevo más tarde.';
-        },
-      });
+            console.log('Resultado moderación IA:', res);
+          },
+          error: (err) => {
+            console.error('Error al analizar imagen con IA', err);
+            this.analizandoImagenIA = false;
+            this.imagenValidaIA = null;
+            this.motivoRechazoIA =
+              'No se pudo analizar la imagen. Intenta de nuevo más tarde.';
+          },
+        });
     }
   }
 
@@ -636,6 +643,7 @@ export class ProductosComponent implements OnInit {
     this.productoAConfirmarBaja = null;
   }
 }
+
 
 
 

@@ -42,8 +42,37 @@
     </div>
   </section>
 
+  <!-- PESTAÑAS (Explorar / Mis productos) -->
+  <section class="tabs-section" *ngIf="isAuth">
+    <div class="productos-tabs">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="vistaActual === 'explorar'"
+        (click)="setVista('explorar')"
+      >
+        Explorar productos
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="vistaActual === 'mios'"
+        (click)="setVista('mios')"
+      >
+        Mis productos
+      </button>
+    </div>
+  </section>
+
+  <section class="tabs-section" *ngIf="!isAuth">
+    <div class="productos-tabs solo-explorar">
+      <span>Explorar productos</span>
+    </div>
+  </section>
+
   <!-- Explorar productos (otros usuarios) -->
-  <section class="section">
+  <section class="section" *ngIf="vistaActual === 'explorar'">
     <div class="section-header">
       <h2>Explorar productos</h2>
       <p class="section-subtitle">
@@ -84,7 +113,7 @@
   </section>
 
   <!-- Mis productos -->
-  <section *ngIf="isAuth" class="section">
+  <section *ngIf="isAuth && vistaActual === 'mios'" class="section">
     <div class="section-header">
       <h2>Mis productos publicados</h2>
       <p class="section-subtitle">
@@ -263,8 +292,7 @@
           <button
             type="button"
             class="btn-secondary"
-            (click)="cerrarFormulario()
-            "
+            (click)="cerrarFormulario()"
           >
             Cancelar
           </button>
@@ -482,6 +510,7 @@
     </div>
   </section>
 </div>
+
 
 
 
