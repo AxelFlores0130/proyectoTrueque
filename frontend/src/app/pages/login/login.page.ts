@@ -161,7 +161,7 @@ export class LoginPage {
     });
   }
 
-  onSubmit() {
+    onSubmit() {
     this.submitted = true;
     this.errorMsg = '';
 
@@ -176,16 +176,32 @@ export class LoginPage {
     }).subscribe({
       next: () => {
         this.loading = false;
-        this.router.navigateByUrl('/productos');
+
+        // 👇 Leer el usuario que ya se guardó en localStorage
+        const user = this.auth.getUser();
+        const rol = (user?.rol || '').toLowerCase();
+
+        // Opcional: para debug
+        console.log('Usuario logueado:', user);
+
+        if (rol === 'administrador') {
+          // 🔐 Panel de administrador
+          this.router.navigateByUrl('/admin');
+        } else {
+          // 👤 Vista normal de cliente
+          this.router.navigateByUrl('/productos');
+        }
       },
       error: (err) => {
         this.loading = false;
         this.errorMsg =
+          err?.error?.error ||   // tu backend suele mandar {"error": "..."}
           err?.error?.message ||
           'No fue posible iniciar sesión. Verifica tus datos.';
       }
     });
   }
+
 }
 
 
